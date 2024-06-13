@@ -1,9 +1,17 @@
 use bevy::prelude::*;
 
+pub struct HelloPlugin;
+
+impl Plugin for HelloPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, add_people)
+            .add_systems(Update, (hello_world, (update_people, greet_people).chain()));
+    }
+}
+
 fn main() {
     App::new()
-        .add_systems(Startup, add_people)
-        .add_systems(Update, (hello_world_system, (update_people, greet_people).chain()))
+        .add_plugins((DefaultPlugins, HelloPlugin))
         .run();
 }
 
@@ -13,7 +21,7 @@ fn greet_people(query: Query<&Name, With<Person>>) {
     }
 }
 
-fn hello_world_system() {
+fn hello_world() {
     println!("hello world");
 }
 
