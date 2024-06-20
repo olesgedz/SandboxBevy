@@ -1,47 +1,70 @@
-use bevy::prelude::*;
+//! Loads and renders a glTF file as a scene.
 
-pub struct HelloPlugin;
-
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, add_people)
-            .add_systems(Update, (hello_world, (update_people, greet_people).chain()));
-    }
-}
+use bevy::{
+    pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
+    prelude::*,
+};
+use std::f32::consts::*;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, HelloPlugin))
+        .insert_resource(DirectionalLightShadowMap { size: 4096 })
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .add_systems(Update, animate_light_direction)
         .run();
 }
 
-fn greet_people(query: Query<&Name, With<Person>>) {
-    for name in &query {
-        println!("hello {}!", name.0);
-    }
-}
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    //command spawn a camera
+    // commands.spawn(Camera2dBundle::default());
 
-fn hello_world() {
-    println!("hello world");
-}
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(0.7, 0.7, 1.0)
+                .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
+            ..default()
+        },
+        EnvironmentMapLight {
+            diffuse_map: asset_server.load("environment_maps/pisa_diffuse_rgb9e5_zstd.ktx2"),
+            specular_map: asset_server.load("environment_maps/pisa_specular_rgb9e5_zstd.ktx2"),
+            intensity: 250.0,
+        },
+    ));
 
-#[derive(Component)]
-struct Person;
-
-#[derive(Component)]
-struct Name(String);
-
-fn add_people(mut commands: Commands) {
-    commands.spawn((Person, Name("Elaina Proctor".to_string())));
-    commands.spawn((Person, Name("Renzo Hume".to_string())));
-    commands.spawn((Person, Name("Zayna Nieves".to_string())));
-}
-
-fn update_people(mut query: Query<&mut Name, With<Person>>) {
-    for mut name in &mut query {
-        if name.0 == "Elaina Proctor" {
-            name.0 = "Elaina Hume".to_string();
-            break; // We don’t need to change any other names
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        // This is a relatively small scene, so use tighter shadow
+        // cascade bounds than the default for better quality.
+        // We also adjusted the shadow map to be larger since we're
+        // only using a single cascade.
+        cascade_shadow_config: CascadeShadowConfigBuilder {
+            num_cascades: 1,
+            maximum_distance: 1.6,
+            ..default()
         }
+            .into(),
+        ..default()
+    });
+    commands.spawn(SceneBundle {
+        scene: asset_server.load("models/FlightHelmet/FlightHelmet.gltf#Scene0"),
+        ..default()
+    });
+}
+
+fn animate_light_direction(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<DirectionalLight>>,
+) {
+    for mut transform in &mut query {
+        transform.rotation = Quat::from_euler(
+            EulerRot::ZYX,
+            0.0,
+            time.elapsed_seconds() * PI / 5.0,
+            -FRAC_PI_4,
+        );
     }
 }
