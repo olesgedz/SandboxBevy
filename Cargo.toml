@@ -1,4 +1,5 @@
 [package]
+default-run = "shooter_bevy"
 name = "shooter_bevy"
 version = "0.1.0"
 edition = "2021"
@@ -16,6 +17,29 @@ opt-level = 3
 [dependencies]
 bevy = { version = "0.13.2", features = ["dynamic_linking"] }
 
+[[bin]]
+name = "shooter_test"
+path = "src/bin/shooter_test/shooter_test.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "bin2"
+path = "src/bin2.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "platformer"
+path = "src/bin/platformer/platformer.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "model3d"
+path = "src/bin/model/model3d.rs"
+test = false
+bench = false
 
 [[example]]
 name = "hello_world"
