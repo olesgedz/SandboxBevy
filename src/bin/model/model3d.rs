@@ -9,13 +9,13 @@ use bevy::render::settings::*;
 fn main() {
     App::new()
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
-            .add_plugins(DefaultPlugins.set(RenderPlugin {
-                render_creation: RenderCreation::Automatic(WgpuSettings {
-                    backends: Some(Backends::VULKAN),
-                    ..default()
-                }),
+        .add_plugins(DefaultPlugins.set(RenderPlugin {
+            render_creation: RenderCreation::Automatic(WgpuSettings {
+                backends: Some(Backends::VULKAN),
                 ..default()
-            }))
+            }),
+            ..default()
+        }))
         .add_systems(Startup, setup)
         .add_systems(Update, animate_light_direction)
         .run();
@@ -29,10 +29,20 @@ fn main() {
     //     }))
     //     .run();
 }
+static mut last: i32 = 5;
+fn keyboard_iter(
+    keys: Res<ButtonInput<KeyCode>>,
+) {
+    if keys.pressed(KeyCode::KeyW) {
+        // W is being held down
+    }
+    if keys.pressed(KeyCode::KeyS) {
+        // W is being held down
+    }
+}
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //command spawn a camera
-    // commands.spawn(Camera2dBundle::default());
 
     commands.spawn((
         Camera3dBundle {
@@ -61,11 +71,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             maximum_distance: 1.6,
             ..default()
         }
-        .into(),
+            .into(),
         ..default()
     });
     commands.spawn(SceneBundle {
-        scene: asset_server.load("models/FlightHelmet/FlightHelmet.gltf#Scene0"),
+        scene: asset_server.load("models/thi_chun-li.gltf#Scene0"),
         ..default()
     });
 }
