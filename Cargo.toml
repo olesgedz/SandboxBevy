@@ -21,3 +21,13 @@ bevy = { version = "0.13.2", features = ["dynamic_linking"] }
 name = "hello_world"
 path = "example/test.rs"
 doc-scrape-examples = true
+
+[[example]]
+name = "example_00_text"
+path = "example/example_00_text/text_rendering.rs"
+doc-scrape-examples = true
+
+[[example]]
+name = "example_01_text_update"
+path = "example/example_01_text_update/text_update.rs"
+doc-scrape-examples = true

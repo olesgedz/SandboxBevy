@@ -45,7 +45,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             maximum_distance: 1.6,
             ..default()
         }
-            .into(),
+        .into(),
         ..default()
     });
     commands.spawn(SceneBundle {
