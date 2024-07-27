@@ -1,49 +1,19 @@
-//! Loads and renders a glTF file as a scene.
 use bevy::{
     pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
     prelude::*,
 };
 use std::f32::consts::*;
-use bevy::render::*;
-use bevy::render::settings::*;
+
 fn main() {
     App::new()
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
-        .add_plugins(DefaultPlugins.set(RenderPlugin {
-            render_creation: RenderCreation::Automatic(WgpuSettings {
-                backends: Some(Backends::VULKAN),
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(Update, animate_light_direction)
         .run();
-    // App::new()
-    //     .add_plugins(DefaultPlugins.set(RenderPlugin {
-    //         render_creation: RenderCreation::Automatic(WgpuSettings {
-    //             backends: Some(Backends::VULKAN),
-    //             ..default()
-    //         }),
-    //         ..default()
-    //     }))
-    //     .run();
-}
-static mut last: i32 = 5;
-fn keyboard_iter(
-    keys: Res<ButtonInput<KeyCode>>,
-) {
-    if keys.pressed(KeyCode::KeyW) {
-        // W is being held down
-    }
-    if keys.pressed(KeyCode::KeyS) {
-        // W is being held down
-    }
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    //command spawn a camera
-
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(0.7, 0.7, 1.0)
@@ -71,11 +41,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             maximum_distance: 1.6,
             ..default()
         }
-            .into(),
+        .into(),
         ..default()
     });
     commands.spawn(SceneBundle {
-        scene: asset_server.load("models/thi_chun-li.gltf#Scene0"),
+        scene: asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset("models/FlightHelmet/FlightHelmet.gltf")),
         ..default()
     });
 }
