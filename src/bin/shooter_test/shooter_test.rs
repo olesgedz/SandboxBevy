@@ -57,6 +57,15 @@ struct Enemy {
     health: u32,
 }
 
+trait Update {
+    fn update() -> Self;
+}
+impl Update for Enemy {
+    fn update() -> Self {
+        Self { health: 100 }
+    }
+
+}
 fn events(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Player>>,
