@@ -33,8 +33,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-
-
     let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
@@ -121,7 +119,7 @@ fn move_player(
     mut mouse_motion: EventReader<MouseMotion>,
     mut player: Query<&mut Transform, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
     let mut transform = player.single_mut();
     for motion in mouse_motion.read() {
@@ -131,7 +129,7 @@ fn move_player(
         transform.rotate_y(yaw);
         transform.rotate_local_x(pitch);
     }
-   let mut forward: Dir3 = transform.forward();
+    let mut forward: Dir3 = transform.forward();
     let mut right: Dir3 = transform.right();
     let mut up: Vec3 = forward.cross(right.as_vec3()).normalize();
 
@@ -151,7 +149,6 @@ fn move_player(
         transform.translation += up * PLAYER_SPEED * time.delta_seconds();
     }
     if input.pressed(KeyCode::KeyX) {
-        transform.translation -= up *PLAYER_SPEED * time.delta_seconds();
+        transform.translation -= up * PLAYER_SPEED * time.delta_seconds();
     }
-
 }
