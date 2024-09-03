@@ -1,21 +1,21 @@
 //! Loads and renders a glTF file as a scene.
+use bevy::render::settings::*;
+use bevy::render::*;
 use bevy::{
     pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
     prelude::*,
 };
 use std::f32::consts::*;
-use bevy::render::*;
-use bevy::render::settings::*;
 fn main() {
     App::new()
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
-            .add_plugins(DefaultPlugins.set(RenderPlugin {
-                render_creation: RenderCreation::Automatic(WgpuSettings {
-                    backends: Some(Backends::VULKAN),
-                    ..default()
-                }),
+        .add_plugins(DefaultPlugins.set(RenderPlugin {
+            render_creation: RenderCreation::Automatic(WgpuSettings {
+                backends: Some(Backends::VULKAN),
                 ..default()
-            }))
+            }),
+            ..default()
+        }))
         .add_systems(Startup, setup)
         .add_systems(Update, animate_light_direction)
         .run();
