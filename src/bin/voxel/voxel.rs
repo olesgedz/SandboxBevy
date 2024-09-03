@@ -1,122 +1,157 @@
 use bevy::prelude::*;
-use bevy::input::mouse::{MouseMotion, MouseWheel};
-use bevy::input::*;
+use bevy::input::mouse::MouseMotion;
+use bevy::render::view::RenderLayers;
+use bevy::color::palettes::tailwind;
+use bevy::pbr::NotShadowCaster;
+
+
+const PLAYER_SPEED: f32 = 10.0;
+
+
+/// The light source belongs to both layers.
+const DEFAULT_RENDER_LAYER: usize = 0;
+
+/// Used by the view model camera and the player's arm.
+/// The light source belongs to both layers.
+const VIEW_MODEL_RENDER_LAYER: usize = 1;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, fly_camera_system)
+        .add_systems(Update, move_player)
         .run();
 }
 
-#[derive(Component)]
-struct FlyCamera {
-    speed: f32,
-    sensitivity: f32,
-}
+#[derive(Debug, Component)]
+struct Player;
 
-fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
-    // Camera with FlyCamera component
-    commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-            ..Default::default()
-        },
-        FlyCamera {
-            speed: 5.0,
-            sensitivity: 0.1,
-        },
-    ));
+#[derive(Debug, Component)]
+struct WorldModelCamera;
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
 
-    // Light
+
+    let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
+    let arm_material = materials.add(Color::from(tailwind::TEAL_200));
+
+    // circular base
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Circle::new(4.0)),
+        material: materials.add(Color::WHITE),
+        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+        ..default()
+    });
+    // cube
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+        material: materials.add(Color::srgb_u8(124, 144, 255)),
+        transform: Transform::from_xyz(0.0, 0.5, 0.0),
+        ..default()
+    });
+    // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 1500.0,
-            ..Default::default()
+            shadows_enabled: true,
+            ..default()
         },
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..Default::default()
+        ..default()
     });
 
-    // Create a grid of voxels
-    let voxel_size = 1.0;
-    let grid_size = 5;
 
-    for x in 0..grid_size {
-        for y in 0..grid_size {
-            for z in 0..grid_size {
-                // commands.spawn(PbrBundle {
-                //     mesh: meshes.add(mesh_fromCuboid::default(),
-                //     material: materials.add(StandardMaterial {
-                //         base_color: Color::rgb(
-                //             (x as f32) / (grid_size as f32),
-                //             (y as f32) / (grid_size as f32),
-                //             (z as f32) / (grid_size as f32),
-                //         ),
-                //         ..Default::default()
-                //     }),
-                //     transform: Transform::from_xyz(
-                //         x as f32 * voxel_size,
-                //         y as f32 * voxel_size,
-                //         z as f32 * voxel_size,
-                //     ),
-                //     ..Default::default()
-                // });
-
-                commands.spawn(PbrBundle {
-                    mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                    material: materials.add(Color::srgb_u8(124, 144, 255)),
-                    transform: Transform::from_xyz(
-                        x as f32 * voxel_size,
-                        y as f32 * voxel_size,
-                        z as f32 * voxel_size,),
+    commands
+        .spawn((
+            Player,
+            SpatialBundle {
+                transform: Transform::from_xyz(0.0, 1.0, 0.0),
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                WorldModelCamera,
+                Camera3dBundle {
+                    projection: PerspectiveProjection {
+                        fov: 90.0_f32.to_radians(),
+                        ..default()
+                    }
+                        .into(),
                     ..default()
-                });
-            }
-        }
-    }
+                },
+            ));
+            parent.spawn((
+                Camera3dBundle {
+                    camera: Camera {
+                        // Bump the order to render on top of the world model.
+                        order: 1,
+                        ..default()
+                    },
+                    projection: PerspectiveProjection {
+                        fov: 70.0_f32.to_radians(),
+                        ..default()
+                    }
+                        .into(),
+                    ..default()
+                },
+                // Only render objects belonging to the view model.
+                RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
+            ));
+
+            // Spawn the player's right arm.
+            parent.spawn((
+                MaterialMeshBundle {
+                    mesh: arm,
+                    material: arm_material,
+                    transform: Transform::from_xyz(0.2, -0.1, -0.25),
+                    ..default()
+                },
+                // Ensure the arm is only rendered by the view model camera.
+                RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
+                // The arm is free-floating, so shadows would look weird.
+                NotShadowCaster,
+            ));
+        });
 }
 
-fn fly_camera_system(
-    time: Res<Time>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut query: Query<(&FlyCamera, &mut Transform)>,
+fn move_player(
+    mut mouse_motion: EventReader<MouseMotion>,
+    mut player: Query<&mut Transform, With<Player>>,
+    input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>
 ) {
-    let (fly_camera, mut transform) = query.single_mut();
-    let mut direction = Vec3::ZERO;
+    let mut transform = player.single_mut();
+    for motion in mouse_motion.read() {
+        let yaw = -motion.delta.x * 0.003;
+        let pitch = -motion.delta.y * 0.002;
+        // Order of rotations is important, see <https://gamedev.stackexchange.com/a/136175/103059>
+        transform.rotate_y(yaw);
+        transform.rotate_local_x(pitch);
+    }
+   let mut forward: Dir3 = transform.forward();
+    let mut right: Dir3 = transform.right();
+    let mut up: Vec3 = forward.cross(right.as_vec3()).normalize();
 
-    // Keyboard movement
-    // if keyboard_input.pressed(KeyCode::KeyW) {
-    //     direction += transform.forward();
-    // }
-    // if keyboard_input.pressed(KeyCode::KeyS) {
-    //     direction -= transform.forward();
-    // }
-    // if keyboard_input.pressed(KeyCode::KeyA) {
-    //     direction -= transform.right();
-    // }
-    // if keyboard_input.pressed(KeyCode::KeyD) {
-    //     direction += transform.right();
-    // }
-    // if keyboard_input.pressed(KeyCode::Space) {
-    //     direction += transform.up();
-    // }
-    // if keyboard_input.pressed(KeyCode::ShiftLeft) {
-    //     direction -= transform.up();
-    // }
+    if input.pressed(KeyCode::KeyW) {
+        transform.translation += forward * PLAYER_SPEED * time.delta_seconds();
+    }
+    if input.pressed(KeyCode::KeyS) {
+        transform.translation -= forward * PLAYER_SPEED * time.delta_seconds();
+    }
+    if input.pressed(KeyCode::KeyA) {
+        transform.translation -= right * PLAYER_SPEED * time.delta_seconds();
+    }
+    if input.pressed(KeyCode::KeyD) {
+        transform.translation += right * PLAYER_SPEED * time.delta_seconds();
+    }
+    if input.pressed(KeyCode::KeyZ) {
+        transform.translation += up * PLAYER_SPEED * time.delta_seconds();
+    }
+    if input.pressed(KeyCode::KeyX) {
+        transform.translation -= up *PLAYER_SPEED * time.delta_seconds();
+    }
 
-    // Apply movement
-    transform.translation += time.delta_seconds() * fly_camera.speed * direction;
-
-    // Mouse look
-    // if mouse_input.pressed(MouseButton::Right) {
-    //     for event in mouse_motion_events {
-    //         let delta = event.delta * fly_camera.sensitivity;
-    //         transform.rotate(Quat::from_rotation_y(-delta.x.to_radians()));
-    //         transform.rotate_local_x(-delta.y.to_radians());
-    //     }
-    // }
 }
