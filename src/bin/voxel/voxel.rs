@@ -3,7 +3,8 @@ use bevy::input::mouse::MouseMotion;
 use bevy::render::view::RenderLayers;
 use bevy::color::palettes::tailwind;
 use bevy::pbr::NotShadowCaster;
-
+use avian3d::prelude::*;
+use bevy::math::vec3;
 
 const PLAYER_SPEED: f32 = 10.0;
 
@@ -17,7 +18,9 @@ const VIEW_MODEL_RENDER_LAYER: usize = 1;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins,
+                      PhysicsPlugins::default(),
+        ))
         .add_systems(Startup, setup)
         .add_systems(Update, move_player)
         .run();
@@ -37,19 +40,28 @@ fn setup(
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
     // circular base
-    commands.spawn(PbrBundle {
+    commands.spawn((
+        RigidBody::Static,
+        Collider::cylinder(4.0, 0.2),
+       PbrBundle {
         mesh: meshes.add(Circle::new(4.0)),
         material: materials.add(Color::WHITE),
-        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2))
+            .with_translation(vec3(0.0, 0.0, 0.0)),
         ..default()
-    });
+    }));
     // cube
-    commands.spawn(PbrBundle {
+    commands.spawn((
+        RigidBody::Dynamic,
+        Collider::cuboid(1.0, 1.0, 1.0),
+        // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+        GravityScale(1.0),
+        PbrBundle {
         mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
         material: materials.add(Color::srgb_u8(124, 144, 255)),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
+        transform: Transform::from_xyz(0.0, 1.0, 0.0),
         ..default()
-    });
+    }));
     // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
@@ -63,9 +75,13 @@ fn setup(
 
     commands
         .spawn((
+            RigidBody::Static,
+            // Mass::default(),
+            GravityScale(1.0),
+            Collider::cylinder(1.0, 5.2),
             Player,
             SpatialBundle {
-                transform: Transform::from_xyz(0.0, 1.0, 0.0),
+                transform: Transform::from_xyz(0.0, 3.0, 0.0),
                 ..default()
             },
         ))
