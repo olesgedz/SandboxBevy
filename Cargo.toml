@@ -58,7 +58,7 @@ bench = false
 
 [[bin]]
 name = "voxel"
-path = "src/bin/voxel/voxel.rs"
+path = "src/bin/voxel/main.rs"
 test = false
 bench = false
 
