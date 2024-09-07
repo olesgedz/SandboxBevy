@@ -1,5 +1,5 @@
-pub use avian3d::prelude::*;
-pub use bevy::prelude::*;
+use avian3d::prelude::*;
+use bevy::prelude::*;
 
 mod input;
 mod setup;
