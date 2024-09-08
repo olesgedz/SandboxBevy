@@ -8,15 +8,16 @@ pub fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 
-    // circular base
+    let base_size = 100.0;
+    //  base
     commands.spawn((
         RigidBody::Static,
-        Collider::cylinder(4.0, 0.2),
+        Collider::cuboid(base_size, 3.0, base_size),
+        Friction::default(),
         PbrBundle {
-            mesh: meshes.add(Circle::new(4.0)),
+            mesh: meshes.add(Cuboid::new(base_size, 3.0, base_size)),
             material: materials.add(Color::WHITE),
-            transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2))
-                .with_translation(vec3(0.0, 0.0, 0.0)),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
             ..default()
         }));
     // cube
