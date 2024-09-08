@@ -8,6 +8,9 @@ use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 
+use crate::debug::debug::*;
+use crate::input::CursorState;
+
 /// Keeps track of mouse motion events, pitch, and yaw
 #[derive(Resource, Default)]
 pub struct InputState {
@@ -143,16 +146,21 @@ pub fn player_shoot(
     buttons: Res<ButtonInput<MouseButton>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut cursor_state: ResMut<CursorState>,
 ) {
     let mut cam_transform = cam.single_mut();
     let mut player_transform = player.single_mut();
 
-    if buttons.just_pressed(MouseButton::Left) {
-        spawn_bullet(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
-    }
+    if cursor_state.lock {
+        for &key in buttons.get_pressed() {
+            if key == MouseButton::Left {
+                spawn_bullet(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
+            }
 
-    if buttons.just_pressed(MouseButton::Right) {
-        spawn_block(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
+            if key == MouseButton::Right {
+                spawn_block(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
+            }
+        }
     }
 }
 
@@ -166,8 +174,9 @@ fn spawn_bullet(
     let bullet = (
         Bullet::default(),
         RigidBody::Dynamic,
-        Collider::sphere(0.1),
+        Collider::cuboid(0.1, 0.1, 0.1),
         Mass(0.01),
+        ShowAxes,
         GravityScale(1.0),
         ExternalForce::new(cam_transform.forward().as_vec3() * 20.0).with_persistence(false),
         Friction::new(100.0),
@@ -198,6 +207,8 @@ fn spawn_block(
         Collider::cuboid(block_side, block_side, block_side),
         // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
         Friction::new(0.4),
+        Mass(90.0),
+        ShowAxes,
         GravityScale(1.0),
         PbrBundle {
             mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
@@ -236,25 +247,25 @@ pub fn move_player(
         }
 
         // left
-        if keys.pressed(KeyCode::KeyA) {
+        if key == KeyCode::KeyA {
             direction += cam_transform.left().as_vec3();
         }
 
         // right
-        if keys.pressed(KeyCode::KeyD) {
+        if key == KeyCode::KeyD {
             direction += cam_transform.right().as_vec3();
         }
 
-        if keys.pressed(KeyCode::KeyZ) {
+        if key == KeyCode::KeyZ {
             direction += transform.up().as_vec3();
             rb.y =  direction.y * settings.speed * time.delta_seconds();
         }
 
-        if keys.pressed(KeyCode::KeyX) {
+        if key == KeyCode::KeyX {
             direction += transform.down().as_vec3();
         }
 
-        if keys.pressed(KeyCode::Space) && rb.y <= 0.0  {
+        if key == KeyCode::Space && rb.y <= 0.0  {
             direction += transform.up().as_vec3();
             rb.y +=  direction.y * 1000.0 * time.delta_seconds();
         }

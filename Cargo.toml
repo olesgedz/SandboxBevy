@@ -29,11 +29,18 @@ rand = "0.8.5"
 avian2d = "0.1"
 # For 3D applications:
 avian3d = { version = "0.1", features = ["debug-plugin"] }
+bevy_egui = "0.29"
 
 
 [[bin]]
 name = "shooter_test"
 path = "src/bin/shooter_test/shooter_test.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "custom_material"
+path = "src/bin/custom_material/custom_material.rs"
 test = false
 bench = false
 

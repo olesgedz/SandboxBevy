@@ -1,6 +1,9 @@
 use avian3d::prelude::*;
 use bevy::math::*;
 use bevy::prelude::*;
+use bevy::render::primitives::Aabb;
+use crate::debug::*;
+use crate::debug::debug::ShowAxes;
 
 pub fn setup(
     mut commands: Commands,
@@ -14,6 +17,7 @@ pub fn setup(
         RigidBody::Static,
         Collider::cuboid(base_size, 3.0, base_size),
         Friction::new(0.4),
+        ShowAxes,
         PbrBundle {
             mesh: meshes.add(Cuboid::new(base_size, 3.0, base_size)),
             material: materials.add(Color::WHITE),
@@ -42,7 +46,4 @@ pub fn setup(
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
-
-
-    // player
 }
