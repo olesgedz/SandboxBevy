@@ -13,7 +13,7 @@ pub fn setup(
     commands.spawn((
         RigidBody::Static,
         Collider::cuboid(base_size, 3.0, base_size),
-        Friction::default(),
+        Friction::new(0.4),
         PbrBundle {
             mesh: meshes.add(Cuboid::new(base_size, 3.0, base_size)),
             material: materials.add(Color::WHITE),
@@ -26,6 +26,7 @@ pub fn setup(
         Collider::cuboid(1.0, 1.0, 1.0),
         // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
         GravityScale(1.0),
+        Friction::new(0.4),
         PbrBundle {
             mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
             material: materials.add(Color::srgb_u8(124, 144, 255)),

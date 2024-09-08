@@ -9,7 +9,7 @@ mod player;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins,
-                      PhysicsPlugins::default(), PlayerPlugin
+                      PhysicsPlugins::default(),   PhysicsDebugPlugin::default(), PlayerPlugin
         ))
         .add_systems(Startup, (setup::setup, input::cursor_grab))
         .add_systems(Update, (input::exit_on_esc))

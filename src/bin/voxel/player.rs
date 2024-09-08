@@ -58,7 +58,7 @@ impl Default for MovementSettings {
     fn default() -> Self {
         Self {
             sensitivity: 0.00012,
-            speed: 12.,
+            speed: 250.,
         }
     }
 }
@@ -70,10 +70,15 @@ pub fn spawn_player(mut commands: Commands,
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
     let mut player = (
-        RigidBody::Static,
+        RigidBody::Dynamic,
         Mass(90.0),
-        GravityScale(1.0),
-        Collider::cylinder(1.0, 5.2),
+        LockedAxes::ROTATION_LOCKED,
+        LinearVelocity::ZERO,
+        Collider::cuboid(3.0, 3.2, 3.0),
+        // Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
+        Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
+        Friction::new(1.0),
+        GravityScale(2.0),
         Player,
         SpatialBundle {
             transform: Transform::from_xyz(0.0, 1.759766, 8.447795),
@@ -143,156 +148,171 @@ pub fn player_shoot(
     let mut player_transform = player.single_mut();
 
     if buttons.just_pressed(MouseButton::Left) {
-        // println!("transform.forward() : {:?}", Mat4::from_translation(cam_transform.translation + cam_transform.forward().as_vec3() * 5.0));
-        let bullet = (
-            Bullet::default(),
-            RigidBody::Dynamic,
-            Collider::sphere(0.1),
-            Mass(0.03),
-            GravityScale(1.0),
-            ExternalForce::new(cam_transform.forward().as_vec3() * 10.0).with_persistence(false),
-            Friction::new(100.0),
-            AngularDamping(0.5),
-            LinearDamping(3.0),
-            MaterialMeshBundle {
-                mesh: meshes.add(Sphere::new(0.1)),
-                material: materials.add(Color::WHITE),
-                transform: Transform::from_matrix(Mat4::from_translation(player_transform.translation + cam_transform.forward().as_vec3() * 2.0)),
-                ..default()
-            }
-        );
-
-        commands.spawn(bullet);
+        spawn_bullet(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
     }
 
-
     if buttons.just_pressed(MouseButton::Right) {
-        let block_side = 0.4;
-
-        // let block = (
-        //     Bullet::default(),
-        //     RigidBody::Dynamic,
-        //     Collider::cuboid(block_side, block_side, block_side),
-        //     Mass(100.0),
-        //     GravityScale(1.0),
-        //     Friction::new(0.4),
-        //     AngularDamping(0.5),
-        //     MaterialMeshBundle {
-        //         mesh: meshes.add(Cuboid::new(block_side, block_side, block_side)),
-        //         material: materials.add(Color::srgb(0.0, 0.0, 0.9)),
-        //         transform: Transform::from_matrix(Mat4::from_translation(player_transform.translation + cam_transform.forward().as_vec3() * 3.0)),
-        //         ..default()
-        //     }
-        // );
-        let block = ((
-            RigidBody::Dynamic,
-            Collider::cuboid(1.0, 1.0, 1.0),
-            // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-            GravityScale(1.0),
-            PbrBundle {
-                mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                material: materials.add(Color::srgb_u8(124, 144, 255)),
-                transform: Transform::from_matrix(Mat4::from_translation(player_transform.translation + cam_transform.forward().as_vec3() * 3.0)),
-                ..default()
-            }
-        ));
-
-        commands.spawn(block);
+        spawn_block(&mut commands, &mut meshes, &mut materials, &player_transform, &cam_transform);
     }
 }
 
+fn spawn_bullet(
+    mut commands: &mut Commands,
+    mut meshes: &mut ResMut<Assets<Mesh>>,
+    mut materials: &mut ResMut<Assets<StandardMaterial>>,
+    player_transform: &Transform,
+    cam_transform: &Transform,
+) {
+    let bullet = (
+        Bullet::default(),
+        RigidBody::Dynamic,
+        Collider::sphere(0.1),
+        Mass(0.01),
+        GravityScale(1.0),
+        ExternalForce::new(cam_transform.forward().as_vec3() * 20.0).with_persistence(false),
+        Friction::new(100.0),
+        AngularDamping(0.5),
+        LinearDamping(3.0),
+        MaterialMeshBundle {
+            mesh: meshes.add(Sphere::new(0.1)),
+            material: materials.add(Color::WHITE),
+            transform: Transform::from_matrix(Mat4::from_translation(player_transform.translation + cam_transform.forward().as_vec3() * 2.0)),
+            ..default()
+        }
+    );
 
-    pub fn move_player(
-    keys: Res < ButtonInput < KeyCode> >,
-    time: Res < Time >,
-    settings: Res < MovementSettings >,
-    mut player: Query < & mut Transform, With < Player >>,
-    mut cam: Query < & mut Transform, (With < WorldModelCamera >, Without < Player> ) >,
-    ) {
+    commands.spawn(bullet);
+}
+
+fn spawn_block(
+    mut commands: &mut Commands,
+    mut meshes: &mut ResMut<Assets<Mesh>>,
+    mut materials: &mut ResMut<Assets<StandardMaterial>>,
+    player_transform: &Transform,
+    cam_transform: &Transform,
+) {
+    let block_side = 1.0;
+
+    let block = ((
+        RigidBody::Dynamic,
+        Collider::cuboid(block_side, block_side, block_side),
+        // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+        Friction::new(0.4),
+        GravityScale(1.0),
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+            material: materials.add(Color::srgb_u8(124, 144, 255)),
+            transform: Transform::from_matrix(Mat4::from_translation(player_transform.translation + cam_transform.forward().as_vec3() * 3.0)),
+            ..default()
+        }
+    ));
+
+    commands.spawn(block);
+}
+
+
+pub fn move_player(
+    keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
+    settings: Res<MovementSettings>,
+    mut player: Query<&mut Transform, With<Player>>,
+    mut cam: Query<&mut Transform, (With<WorldModelCamera>, Without<Player>)>,
+    mut rigid_body: Query<&mut LinearVelocity, With<Player>>,
+) {
     let mut transform = player.single_mut();
     let mut cam_transform = cam.single_mut();
+    let mut rb = rigid_body.single_mut();
     let mut direction: Vec3 = Vec3::ZERO;
 
-    // forward
-    if keys.pressed(KeyCode::KeyW) {
-    direction += cam_transform.forward().as_vec3();
+    for &key in keys.get_pressed() {
+        // forward
+        if key == KeyCode::KeyW {
+            direction += cam_transform.forward().as_vec3();
+        }
+
+        // back
+        if key == KeyCode::KeyS {
+            direction += cam_transform.back().as_vec3();
+        }
+
+        // left
+        if keys.pressed(KeyCode::KeyA) {
+            direction += cam_transform.left().as_vec3();
+        }
+
+        // right
+        if keys.pressed(KeyCode::KeyD) {
+            direction += cam_transform.right().as_vec3();
+        }
+
+        if keys.pressed(KeyCode::KeyZ) {
+            direction += transform.up().as_vec3();
+            rb.y =  direction.y * settings.speed * time.delta_seconds();
+        }
+
+        if keys.pressed(KeyCode::KeyX) {
+            direction += transform.down().as_vec3();
+        }
+
+        if keys.pressed(KeyCode::Space) && rb.y <= 0.0  {
+            direction += transform.up().as_vec3();
+            rb.y +=  direction.y * 1000.0 * time.delta_seconds();
+        }
+
+
+        direction = direction.normalize_or_zero();
+        // println!("direction : {:?}", direction);
+        let velocity = direction * settings.speed * time.delta_seconds();
+
+        // transform.translation += velocity;
+        rb.x =  direction.x * settings.speed * time.delta_seconds();
+        rb.z =  direction.z * settings.speed * time.delta_seconds();
+        println!("velocity : {:?}",  rb.0);
+
     }
 
-    // back
-    if keys.pressed(KeyCode::KeyS) {
-    direction += cam_transform.back().as_vec3();
-    }
-
-    // left
-    if keys.pressed(KeyCode::KeyA) {
-    direction += cam_transform.left().as_vec3();
-    }
-
-    // right
-    if keys.pressed(KeyCode::KeyD) {
-    direction += cam_transform.right().as_vec3();
-    }
-
-    if keys.pressed(KeyCode::KeyZ) {
-    direction += transform.up().as_vec3();
-    }
-
-    if keys.pressed(KeyCode::KeyX) {
-    direction += transform.down().as_vec3();
-    }
-
-    // if keys.pressed(KeyCode::Space) {
-    //
-    // }
+}
 
 
-    direction = direction.normalize_or_zero();
-    // println!("direction : {:?}", direction);
-    let velocity = direction * settings.speed * time.delta_seconds();
-
-    transform.translation += velocity;
-    }
-
-
-    pub fn player_look(
-    settings: Res < MovementSettings >,
-    primary_window: Query < & Window, With <PrimaryWindow > >,
-    mut state: ResMut < InputState>,
-    motion: Res < Events < MouseMotion >>,
-    mut query: Query < & mut Transform, With < WorldModelCamera > >,
-    ) {
+pub fn player_look(
+    settings: Res<MovementSettings>,
+    primary_window: Query<&Window, With<PrimaryWindow>>,
+    mut state: ResMut<InputState>,
+    motion: Res<Events<MouseMotion>>,
+    mut query: Query<&mut Transform, With<WorldModelCamera>>,
+) {
     if let Ok(window) = primary_window.get_single() {
-    for mut transform in query.iter_mut() {
-    for ev in state.reader_motion.read( &motion) {
-    let ( mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
-    match window.cursor.grab_mode {
-    CursorGrabMode::None => (),
-    _ => {
-    // Using smallest of height or width ensures equal vertical and horizontal sensitivity
-    let window_scale = window.height().min(window.width());
-    pitch -= (settings.sensitivity * ev.delta.y * window_scale).to_radians();
-    yaw -= (settings.sensitivity * ev.delta.x * window_scale).to_radians();
-    }
-    }
+        for mut transform in query.iter_mut() {
+            for ev in state.reader_motion.read(&motion) {
+                let (mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+                match window.cursor.grab_mode {
+                    CursorGrabMode::None => (),
+                    _ => {
+                        // Using smallest of height or width ensures equal vertical and horizontal sensitivity
+                        let window_scale = window.height().min(window.width());
+                        pitch -= (settings.sensitivity * ev.delta.y * window_scale).to_radians();
+                        yaw -= (settings.sensitivity * ev.delta.x * window_scale).to_radians();
+                    }
+                }
 
-    pitch = pitch.clamp( - 1.54, 1.54);
+                pitch = pitch.clamp(-1.54, 1.54);
 
-    // Order is important to prevent unintended roll
-    transform.rotation =
-    Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
-    }
-    }
+                // Order is important to prevent unintended roll
+                transform.rotation =
+                    Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+            }
+        }
     } else {
-    warn ! ("Primary window not found for `player_look`!");
+        warn!("Primary window not found for `player_look`!");
     }
-    }
+}
 
-    pub struct PlayerPlugin;
-    impl Plugin for PlayerPlugin {
-    fn build( & self, app: & mut App) {
-    app.init_resource::< InputState > ()
-    .init_resource::< MovementSettings > ()
-    .add_systems(Startup, spawn_player)
-    .add_systems(Update, (player_look, move_player, player_shoot));
+pub struct PlayerPlugin;
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<InputState>()
+            .init_resource::<MovementSettings>()
+            .add_systems(Startup, spawn_player)
+            .add_systems(Update, (player_look, move_player, player_shoot));
     }
-    }
+}
