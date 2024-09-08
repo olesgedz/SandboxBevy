@@ -1,4 +1,5 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle, window::WindowResolution};
+use avian2d::prelude::*;
 
 const WINDOW_WIDTH: f32 = 1024.0;
 const WINDOW_HEIGHT: f32 = 720.0;
@@ -22,6 +23,7 @@ fn main() {
             }),
             ..Default::default()
         }))
+        .add_plugins((PhysicsPlugins::default(), PhysicsDebugPlugin::default()))
         .add_systems(Startup, setup)
         .run();
 }
@@ -72,14 +74,17 @@ fn setup(
 
     commands.spawn(Camera2dBundle::default());
 
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Circle::default()).into(),
+    commands.spawn((MaterialMesh2dBundle {
+        mesh: meshes.add(Circle::new(10.0)).into(),
         material: materials.add(ColorMaterial::from(COLOR_PLAYER)),
         transform: Transform {
             translation: Vec3::new(WINDOW_LEFT_X + 100.0, WINDOW_BOTTOM_Y + 30.0, 0.0),
-            scale: Vec3::new(30.0, 30.0, 1.0),
+            scale: Vec3::new(1.0, 1.0, 1.0),
             ..Default::default()
         },
         ..default()
-    });
+    },
+   RigidBody::Static,
+   Collider::circle(10.0),
+    ));
 }

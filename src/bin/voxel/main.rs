@@ -1,7 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use crate::input::CursorState;
+use bevy_egui::{EguiPlugin};
 use crate::player::PlayerPlugin;
 
 mod input;
