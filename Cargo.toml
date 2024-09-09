@@ -22,13 +22,13 @@ incremental = false
 debug = false
 
 [dependencies]
-bevy = { version = "0.14.1", features = ["dynamic_linking"] }
+bevy = { version = "0.14.2", features = ["dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
 # For 2D applications:
-avian2d = "0.1"
+avian2d = "0.1.2"
 # For 3D applications:
-avian3d = { version = "0.1", features = ["debug-plugin"] }
+avian3d = { version = "0.1.2", features = ["debug-plugin"] }
 bevy_egui = "0.29"
 
 
