@@ -22,13 +22,25 @@ incremental = false
 debug = false
 
 [dependencies]
-bevy = { version = "0.14.0", features = ["dynamic_linking"] }
+bevy = { version = "0.14.2", features = ["dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
+# For 2D applications:
+avian2d = "0.1.2"
+# For 3D applications:
+avian3d = { version = "0.1.2", features = ["debug-plugin"] }
+bevy_egui = "0.29"
+
 
 [[bin]]
 name = "shooter_test"
 path = "src/bin/shooter_test/shooter_test.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "custom_material"
+path = "src/bin/custom_material/custom_material.rs"
 test = false
 bench = false
 
@@ -49,6 +61,14 @@ name = "model3d"
 path = "src/bin/model/model3d.rs"
 test = false
 bench = false
+
+
+[[bin]]
+name = "voxel"
+path = "src/bin/voxel/main.rs"
+test = false
+bench = false
+
 
 [[example]]
 name = "hello_world"
