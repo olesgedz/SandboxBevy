@@ -1,5 +1,3 @@
-
-
 //! This example illustrates how to create UI text and update it in a system.
 //!
 //! It displays the current FPS in the top left corner, as well as text that changes color
@@ -9,6 +7,8 @@ use bevy::{
     diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
     prelude::*,
 };
+
+use bevy::color::palettes::css::GOLD;
 
 fn main() {
     App::new()
@@ -42,14 +42,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
         ) // Set the justification of the Text
-            .with_text_justify(JustifyText::Center)
-            // Set the style of the TextBundle itself.
-            .with_style(Style {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(5.0),
-                right: Val::Px(5.0),
-                ..default()
-            }),
+        .with_text_justify(JustifyText::Center)
+        // Set the style of the TextBundle itself.
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(5.0),
+            right: Val::Px(5.0),
+            ..default()
+        }),
         ColorText,
     ));
 
@@ -69,7 +69,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TextSection::from_style(if cfg!(feature = "default_font") {
                 TextStyle {
                     font_size: 60.0,
-                    color: Color::GOLD,
+                    color: bevy::prelude::Color::Srgba(GOLD),
                     // If no font is specified, the default font (a minimal subset of FiraMono) will be used.
                     ..default()
                 }
@@ -78,7 +78,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TextStyle {
                     font: asset_server.load("fonts/FiraMono-Medium.ttf"),
                     font_size: 60.0,
-                    color: Color::GOLD,
+                    color: bevy::prelude::Color::Srgba(GOLD),
                 }
             }),
         ]),
@@ -108,12 +108,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
         )
-            .with_style(Style {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(5.0),
-                left: Val::Px(15.0),
-                ..default()
-            }),
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(5.0),
+            left: Val::Px(15.0),
+            ..default()
+        }),
     );
 }
 
@@ -122,12 +122,12 @@ fn text_color_system(time: Res<Time>, mut query: Query<&mut Text, With<ColorText
         let seconds = time.elapsed_seconds();
 
         // Update the color of the first and only section.
-        text.sections[0].style.color = Color::Rgba {
-            red: (1.25 * seconds).sin() / 2.0 + 0.5,
-            green: (0.75 * seconds).sin() / 2.0 + 0.5,
-            blue: (0.50 * seconds).sin() / 2.0 + 0.5,
-            alpha: 1.0,
-        };
+        text.sections[0].style.color = Color::srgba(
+            (1.25 * seconds).sin() / 2.0 + 0.5,
+            (0.75 * seconds).sin() / 2.0 + 0.5,
+            (0.50 * seconds).sin() / 2.0 + 0.5,
+            1.0,
+        );
     }
 }
 

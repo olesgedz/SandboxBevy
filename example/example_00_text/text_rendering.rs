@@ -1,5 +1,6 @@
 // module text_rendering;
 
+use bevy::color::palettes::basic::*;
 use bevy::{
     prelude::*,
     sprite::Anchor,
@@ -73,7 +74,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.25, 0.25, 0.75),
+                color: Color::srgb(0.25, 0.25, 0.75),
                 custom_size: Some(Vec2::new(box_size.x, box_size.y)),
                 ..default()
             },
@@ -105,7 +106,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.20, 0.3, 0.70),
+                color: Color::srgb(0.20, 0.3, 0.70),
                 custom_size: Some(Vec2::new(other_box_size.x, other_box_size.y)),
                 ..default()
             },
@@ -133,17 +134,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 
     for (text_anchor, color) in [
-        (Anchor::TopLeft, Color::RED),
-        (Anchor::TopRight, Color::GREEN),
-        (Anchor::BottomRight, Color::BLUE),
-        (Anchor::BottomLeft, Color::YELLOW),
+        (Anchor::TopLeft, RED),
+        (Anchor::TopRight, GREEN),
+        (Anchor::BottomRight, BLUE),
+        (Anchor::BottomLeft, YELLOW),
     ] {
         commands.spawn(Text2dBundle {
             text: Text {
                 sections: vec![TextSection::new(
                     format!(" Anchor::{text_anchor:?} "),
                     TextStyle {
-                        color,
+                        color: bevy::prelude::Color::Srgba(color),
                         ..slightly_smaller_text_style.clone()
                     },
                 )],
