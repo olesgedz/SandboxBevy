@@ -1,5 +1,3 @@
-use bevy::render::render_resource::ShaderType;
-
 fn main() {
     println!("Hello, world!");
 
@@ -8,5 +6,5 @@ fn main() {
     for i in array {
         println!("{}", i);
     }
-    for let mut i
+    assert_eq!(array.len(), 5);
 }
