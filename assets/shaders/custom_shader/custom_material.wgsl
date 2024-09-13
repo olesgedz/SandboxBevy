@@ -10,5 +10,5 @@ const COLOR_MULTIPLIER: vec4<f32> = vec4<f32>(1.0, 1.0, 1.0, 0.5);
 fn fragment(
     mesh: VertexOutput,
 ) -> @location(0) vec4<f32> {
-    return vec4(1.0, 1.0, 0.0, 1.0) * COLOR_MULTIPLIER;
+    return vec4(1.0, 1.0, 1.0, 1.0) * COLOR_MULTIPLIER;
 }
