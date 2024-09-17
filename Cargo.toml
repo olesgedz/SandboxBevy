@@ -57,6 +57,13 @@ test = false
 bench = false
 
 [[bin]]
+name = "rpg"
+path = "src/bin/rpg/rpg.rs"
+test = false
+bench = false
+
+
+[[bin]]
 name = "model3d"
 path = "src/bin/model/model3d.rs"
 test = false
