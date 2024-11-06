@@ -32,6 +32,11 @@ avian3d = { version = "0.1.2", features = ["debug-plugin"] }
 bevy_egui = "0.29"
 
 
+[workspace]
+members = [
+    "projects/bevy_ecs_test"
+]
+
 [[bin]]
 name = "shooter_test"
 path = "src/bin/shooter_test/shooter_test.rs"
