@@ -35,7 +35,8 @@ bevy_egui = "0.29"
 [workspace]
 members = [
     "projects/bevy_ecs_test",
-    "projects/cards"]
+    "projects/cards",
+    "projects/dialog"]
 
 [[bin]]
 name = "shooter_test"
