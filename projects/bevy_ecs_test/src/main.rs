@@ -1,4 +1,3 @@
-use bevy::pbr::DirectionalLightShadowMap;
 use bevy::prelude::*;
 
 // Components
@@ -49,7 +48,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(TurnState::PlayerTurn)
         .add_systems(Startup, setup)
-        .add_systems(Update, ai_turn_system)
+        // .add_systems(Update, ai_turn_system)
         .run();
 }
 

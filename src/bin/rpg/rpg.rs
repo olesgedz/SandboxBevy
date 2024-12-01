@@ -1,6 +1,7 @@
-use std::slice::Windows;
 use bevy::prelude::*;
+use std::fmt::Debug;
 use bevy::sprite::Anchor;
+use std::slice::Windows;
 
 fn main() {
     App::new()
@@ -44,7 +45,7 @@ impl Dialogue {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d::default());
 
     commands.insert_resource(Dialogue {
         text: vec![
@@ -61,59 +62,55 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-
-fn setup_ui(mut commands: Commands, asset_serve: Res<AssetServer>, window: Query<&Window>, asset_server: Res<AssetServer>) {
+fn setup_ui(
+    mut commands: Commands,
+    asset_serve: Res<AssetServer>,
+    window: Query<&Window>,
+    asset_server: Res<AssetServer>,
+) {
     let window_display = window.single();
 
     let resolution = window_display.resolution.size();
 
-    commands.spawn(SpriteBundle {
-        texture: asset_serve.load("textures/clippy.png"),
-        sprite: Sprite {
-            // Flip the logo to the left
-            ..default()
-        },
-        ..default()
-    });
+    commands.spawn(Sprite::from(asset_serve.load("textures/clippy.png")))
+        .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)));
 
-    let background =  SpriteBundle {
-        sprite: Sprite {
+    let background = (
+        Sprite {
             color: Color::srgba(0.5, 0.5, 1.0, 0.02),
             custom_size: Some(Vec2::new(resolution.x - 20.0, resolution.y / 3.0 - 10.0)),
             ..default()
         },
-        transform: Transform::from_translation(Vec3::new(0.0, -resolution.y / 3.0, 0.0)),
-        ..default()
-    };
+        Transform::from_translation(Vec3::new(0.0, -resolution.y / 3.0, 0.0)),
+    );
 
-    let text_field = TextBundle::from_section(
-            "", // Start with empty text
-            TextStyle {
-                font: asset_server.load("fonts/Montserrat-Bold.ttf"),
-                font_size: 40.0,
-                color: Color::WHITE,
-            },
-        );
+    let text_field = (
+        Text2d::new("aaaaaa"),
+        // Start with empty text
+        TextFont {
+            font: asset_server.load("fonts/Montserrat-Bold.ttf"),
+            font_size: 40.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_xyz(0.0, -resolution.y / 3.0 + 10.0, 0.0),
+    );
 
-
-    commands.spawn(NodeBundle {
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-        ..default()
-    }
-    ).with_children(|parent| {
-
-        parent.spawn(background);
-        parent.spawn(text_field);
+    commands
+        .spawn((
+            Node { ..default() },
+            Transform::from_translation(Vec3::new(0.0, -resolution.y / 3.0, 0.0)),
+        ))
+        .with_children(|parent| {
+            parent.spawn(background);
+            parent.spawn(text_field);
             // Spawning the text entity
             // Anchor::Center,
             // TextComponent,
-
-    });
+        });
 
     // commands.spawn(background);
 }
-
-
 
 fn update_text(
     time: Res<Time>,
@@ -132,7 +129,16 @@ fn update_text(
     // }
     //
     // Update the Text component with the new visible text
-    for mut text in query.iter_mut() {
-        text.sections[0].value = "AAAAA".parse().unwrap(); //state.visible_text.clone();
+    // for mut text in query.iter_mut() {
+    //     text. = "dasd";
+    // }
+}
+
+fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
+    move |ev, mut sprites| {
+        let Ok(mut sprite) = sprites.get_mut(ev.entity()) else {
+            return;
+        };
+        sprite.color = color;
     }
 }

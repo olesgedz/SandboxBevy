@@ -1,6 +1,6 @@
 [package]
-default-run = "shooter_bevy"
-name = "shooter_bevy"
+default-run = "rpg"
+name = "sandbox_bevy"
 version = "0.1.0"
 edition = "2021"
 
@@ -22,14 +22,14 @@ incremental = false
 debug = false
 
 [dependencies]
-bevy = { version = "0.14.2", features = ["dynamic_linking"] }
+bevy = { version = "0.15.0"}#, features = ["dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
 # For 2D applications:
 avian2d = "0.1.2"
 # For 3D applications:
 avian3d = { version = "0.1.2", features = ["debug-plugin"] }
-bevy_egui = "0.29"
+bevy_egui = "0.31.1"
 
 
 [workspace]
@@ -38,23 +38,6 @@ members = [
     "projects/cards",
     "projects/dialog"]
 
-[[bin]]
-name = "shooter_test"
-path = "src/bin/shooter_test/shooter_test.rs"
-test = false
-bench = false
-
-[[bin]]
-name = "custom_material"
-path = "src/bin/custom_material/custom_material.rs"
-test = false
-bench = false
-
-[[bin]]
-name = "bin2"
-path = "src/bin2.rs"
-test = false
-bench = false
 
 [[bin]]
 name = "platformer"
@@ -71,29 +54,6 @@ bench = false
 
 [[bin]]
 name = "model3d"
-path = "src/bin/model/model3d.rs"
+path = "src/bin/model/load_gltf.rs"
 test = false
 bench = false
-
-
-[[bin]]
-name = "voxel"
-path = "src/bin/voxel/main.rs"
-test = false
-bench = false
-
-
-[[example]]
-name = "hello_world"
-path = "example/test.rs"
-doc-scrape-examples = true
-
-[[example]]
-name = "example_00_text"
-path = "example/example_00_text/text_rendering.rs"
-doc-scrape-examples = true
-
-[[example]]
-name = "example_01_text_update"
-path = "example/example_01_text_update/text_update.rs"
-doc-scrape-examples = true
