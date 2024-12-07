@@ -26,9 +26,9 @@ bevy = { version = "0.15.0"}#, features = ["dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
 # For 2D applications:
-avian2d = "0.1.2"
+avian2d = { git = "https://github.com/Jondolf/avian", branch = "main" }   
 # For 3D applications:
-avian3d = { version = "0.1.2", features = ["debug-plugin"] }
+avian3d = { git = "https://github.com/Jondolf/avian", branch = "main" }
 bevy_egui = "0.31.1"
 
 
@@ -36,7 +36,8 @@ bevy_egui = "0.31.1"
 members = [
     "projects/bevy_ecs_test",
     "projects/cards",
-    "projects/dialog"]
+    "projects/dialog",
+    "projects/shooter"]
 
 
 [[bin]]
