@@ -55,17 +55,31 @@ fn main() {
 // Game Setup
 fn setup(mut commands: Commands) {
     // Spawn player units
-    commands.spawn(PlayerUnit)
+    commands
+        .spawn(PlayerUnit)
         .insert(AIControlled)
-        .insert(Health { current: 100, max: 100 })
-        .insert(Attack { range: 1, damage: 20 })
+        .insert(Health {
+            current: 100,
+            max: 100,
+        })
+        .insert(Attack {
+            range: 1,
+            damage: 20,
+        })
         .insert(Position { x: 0, y: 0 });
 
     // Spawn enemy units
-    commands.spawn(EnemyUnit)
+    commands
+        .spawn(EnemyUnit)
         .insert(AIControlled)
-        .insert(Health { current: 50, max: 50 })
-        .insert(Attack { range: 1, damage: 10 })
+        .insert(Health {
+            current: 50,
+            max: 50,
+        })
+        .insert(Attack {
+            range: 1,
+            damage: 10,
+        })
         .insert(Position { x: 5, y: 5 });
 }
 
@@ -83,7 +97,10 @@ fn decide_action(
         }
     }
     // Default to move toward (1, 1) for simplicity
-    Some(ActionType::Move(Position { x: attacker_position.x + 1, y: attacker_position.y }))
+    Some(ActionType::Move(Position {
+        x: attacker_position.x + 1,
+        y: attacker_position.y,
+    }))
 }
 
 // AI Turn System
@@ -101,7 +118,7 @@ fn ai_turn_system(
         TurnState::PlayerTurn => (
             true,
             player_query.iter_mut().collect::<Vec<_>>(), // Mutable access to player units
-            enemy_query.iter_mut().collect::<Vec<_>>(), // Mutable access to enemy units
+            enemy_query.iter_mut().collect::<Vec<_>>(),  // Mutable access to enemy units
         ),
         TurnState::EnemyTurn => (
             false,

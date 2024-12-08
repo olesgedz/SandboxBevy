@@ -1,16 +1,16 @@
 // use avian2d::prelude::*;
 // use bevy::{prelude::*, sprite::*, window::WindowResolution};
-// 
+//
 // const WINDOW_WIDTH: f32 = 1024.0;
 // const WINDOW_HEIGHT: f32 = 720.0;
-// 
+//
 // const WINDOW_BOTTOM_Y: f32 = WINDOW_HEIGHT / -2.0;
 // const WINDOW_LEFT_X: f32 = WINDOW_WIDTH / -2.0;
-// 
+//
 // const COLOR_BACKGROUND: Color = Color::rgb(0.13, 0.13, 0.23);
 // const COLOR_PLATFORM: Color = Color::rgb(0.29, 0.31, 0.41);
 // const COLOR_PLAYER: Color = Color::rgb(0.60, 0.55, 0.60);
-// 
+//
 // fn main() {
 //     App::new()
 //         .insert_resource(ClearColor(COLOR_BACKGROUND))
@@ -27,7 +27,7 @@
 //         .add_systems(Startup, setup)
 //         .run();
 // }
-// 
+//
 // fn setup(
 //     mut commands: Commands,
 //     mut meshes: ResMut<Assets<Mesh>>,
@@ -45,7 +45,7 @@
 //         },
 //         ..Default::default()
 //     });
-// 
+//
 //     commands.spawn(SpriteBundle {
 //         sprite: Sprite {
 //             color: COLOR_PLATFORM,
@@ -58,7 +58,7 @@
 //         },
 //         ..Default::default()
 //     });
-// 
+//
 //     commands.spawn((
 //         Sprite {
 //             color: COLOR_PLATFORM,
@@ -70,15 +70,15 @@
 //             ..Default::default()
 //         },
 //     ));
-// 
+//
 //     commands.spawn(Camera2d::default());
-// 
+//
 //     commands.spawn((
 //         Mesh2d( meshes.add(Circle::new(10.0))),
 //         // RigidBody::Static,
 //         // Collider::circle(10.0),
 //     ));
-// 
+//
 //     // MeshMaterial2d (
 //     //     materials.add(ColorMaterial::from(COLOR_PLAYER)),
 //     //     transform: Transform {

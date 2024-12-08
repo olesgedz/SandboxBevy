@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use std::fmt::Debug;
 use bevy::sprite::Anchor;
+use std::fmt::Debug;
 use std::slice::Windows;
 
 fn main() {
@@ -72,7 +72,8 @@ fn setup_ui(
 
     let resolution = window_display.resolution.size();
 
-    commands.spawn(Sprite::from(asset_serve.load("textures/clippy.png")))
+    commands
+        .spawn(Sprite::from(asset_serve.load("textures/clippy.png")))
         .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)));
 
     let background = (
