@@ -55,6 +55,6 @@ struct Rotates;
 /// Rotates any entity around the x and y-axis
 fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotates>>) {
     for mut transform in &mut query {
-        transform.rotate_y(0.15 * time.delta_secs());
+        transform.rotate_y(0.15 * time.delta_secs());h
     }
 }
