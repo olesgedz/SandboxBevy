@@ -92,3 +92,7 @@
 //     // Collider::circle(10.0),
 //     // ));
 // }
+
+fn main() {
+    println!("Hello, world!");
+}

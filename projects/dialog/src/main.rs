@@ -6,6 +6,7 @@ use bevy::{
     sprite::Anchor,
     text::{FontSmoothing, LineBreak, TextBounds}
 };
+use bevy::text::cosmic_text::ttf_parser::Style;
 
 fn main() {
     App::new()
@@ -38,18 +39,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
                 Sprite::from_color(Color::srgb(0.25, 0.25, 0.75), box_position),
                 Transform::from_translation(box_position.extend(0.0)),
-            ))
+               ))
         .with_children(|builder| {
-            builder.spawn((Text2d("hjhjhjh".parse().unwrap())));
+            builder.spawn((Text2d("Data".parse().unwrap())));
         });
-    // 
-    // commands.spawn(SpriteBundle {
-    //     texture: asset_server.load("characters/alice/Alice_Default.png"),
-    //     transform: Transform::from_translation(Vec3::new(500.0, -10.0, 1.0))
-    //         .with_scale(Vec3::splat(0.25)),
-    //     ..default()
-    // });
-    // 
+    
+    commands.spawn((
+        Sprite::from_image(asset_server.load("characters/alice/Alice_Default.png")),
+        // texture: asset_server.load("characters/alice/Alice_Default.png"),
+        // transform: Transform::from_translation(Vec3::new(500.0, -10.0, 1.0))
+        //     .with_scale(Vec3::splat(0.25)),
+        ));
+    
     // commands
     //     .spawn(NodeBundle {
     //         style: Style {
