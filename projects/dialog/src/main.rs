@@ -7,10 +7,11 @@ use bevy::{
     text::{FontSmoothing, LineBreak, TextBounds}
 };
 use bevy::text::cosmic_text::ttf_parser::Style;
+use std::fmt::Debug;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup)
         // .add_systems(Update, relative_cursor_position_system)
         .run();
@@ -49,8 +50,23 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // texture: asset_server.load("characters/alice/Alice_Default.png"),
         // transform: Transform::from_translation(Vec3::new(500.0, -10.0, 1.0))
         //     .with_scale(Vec3::splat(0.25)),
-        ));
-    
+        Transform::from_translation(Vec3::new(500.0, -10.0, 1.0))
+            .with_scale(Vec3::splat(0.25)),
+        ))
+        .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)))
+        .observe(recolor_on::<Pointer<Out>>(Color::BLACK))
+        .observe(recolor_on::<Pointer<Down>>(Color::srgb(1.0, 1.0, 0.0)))
+        .observe(recolor_on::<Pointer<Up>>(Color::srgb(0.0, 1.0, 1.0)))
+        .observe(|out: Trigger<Pointer<Down>>, mut texts: Query<&mut Text2d>| {
+            let mut text = texts.get_single_mut().unwrap();
+            text.0 = "Down".parse().unwrap();
+            println!("Down {:?}", out);
+        })
+        .observe(|out: Trigger<Pointer<Up>>, mut texts: Query<&mut Text2d>| {
+            let mut text = texts.get_single_mut().unwrap();
+            text.0 = "Up".parse().unwrap();
+            println!("Up {:?}", out);
+        });;;;
     // commands
     //     .spawn(NodeBundle {
     //         style: Style {
@@ -90,7 +106,20 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //         });
     //     });
 }
+// .observe(|out: Trigger<Pointer<Down>>, mut texts: Query<&mut Text2d>| {
+//     let mut text = texts.get_mut(out.entity()).unwrap();
+//     text.0 = "Down".parse().unwrap();
+//     println!("Down {:?}", out);
+// });;
 
+fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
+    move |ev, mut sprites| {
+        let Ok(mut sprite) = sprites.get_mut(ev.entity()) else {
+            return;
+        };
+        sprite.color = color;
+    }
+}
 fn relative_cursor_position_system(
     relative_cursor_position_query: Query<&RelativeCursorPosition>,
     mut output_query: Query<&mut Text>,
