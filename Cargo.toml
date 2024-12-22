@@ -30,6 +30,7 @@ avian2d =  { version = "0.2.0" }
 # For 3D applications:
 avian3d = { version = "0.2.0" }
 bevy_egui = "0.31.1"
+rand_chacha = "0.3.1"
 
 
 [workspace]
