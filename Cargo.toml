@@ -39,7 +39,11 @@ members = [
     "projects/cards",
     "projects/dialog",
     "projects/shooter",
-    "projects/character_controller_3d"
+    "projects/character_controller_3d",
+    "projects/chess",
+    "projects/platformer",
+    "projects/shaders_test",
+    "projects/survival2d",
 ]
 
 
