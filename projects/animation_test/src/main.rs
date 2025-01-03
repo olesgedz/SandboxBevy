@@ -49,21 +49,21 @@ fn observe_on_step(
     transforms: Query<&GlobalTransform>,
     mut seeded_rng: ResMut<SeededRng>,
 ) {
-    let translation = transforms.get(trigger.target()).unwrap().translation();
-    // Spawn a bunch of particles.
-    for _ in 0..14 {
-        let horizontal = seeded_rng.0.gen::<Dir2>() * seeded_rng.0.gen_range(8.0..12.0);
-        let vertical = seeded_rng.0.gen_range(0.0..4.0);
-        let size = seeded_rng.0.gen_range(0.2..1.0);
-        commands.queue(spawn_particle(
-            particle.mesh.clone(),
-            particle.material.clone(),
-            translation.reject_from_normalized(Vec3::Y),
-            seeded_rng.0.gen_range(0.2..0.6),
-            size,
-            Vec3::new(horizontal.x, vertical, horizontal.y) * 10.0,
-        ));
-    }
+    // let translation = transforms.get(trigger.target()).unwrap().translation();
+    // // Spawn a bunch of particles.
+    // for _ in 0..14 {
+    //     let horizontal = seeded_rng.0.gen::<Dir2>() * seeded_rng.0.gen_range(8.0..12.0);
+    //     let vertical = seeded_rng.0.gen_range(0.0..4.0);
+    //     let size = seeded_rng.0.gen_range(0.2..1.0);
+    //     commands.queue(spawn_particle(
+    //         particle.mesh.clone(),
+    //         particle.material.clone(),
+    //         translation.reject_from_normalized(Vec3::Y),
+    //         seeded_rng.0.gen_range(0.2..0.6),
+    //         size,
+    //         Vec3::new(horizontal.x, vertical, horizontal.y) * 10.0,
+    //     ));
+    // }
 }
 
 fn setup(
