@@ -22,7 +22,7 @@ incremental = false
 debug = false
 
 [dependencies]
-bevy = { version = "0.15.0", features = ["webgl2"] }  #"dynamic_linking"
+bevy = { version = "0.15.1", features = ["webgl2", "dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
 # For 2D applications:
