@@ -1,4 +1,5 @@
 use bevy::asset::io::memory::Data;
+use bevy::input::keyboard::KeyboardInput;
 use bevy::{
     input::mouse::*,
     prelude::*,
@@ -7,11 +8,29 @@ use bevy::{
 };
 use std::fmt::Debug;
 
+#[derive(Component)]
+struct TypingText {
+    full_text: String,
+    visible_length: usize,
+    timer: Timer,
+    is_skipping: bool,
+}
+#[derive(Component)]
+struct MainCamera;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup)
-        .add_systems(Update, (mouse_motion, relative_cursor_position_system))
+        .add_systems(
+            Update,
+            (
+                mouse_motion,
+                relative_cursor_position_system,
+                text_typing_system,
+                input_skip_system,
+                my_cursor_system,
+            ),
+        )
         .run();
 }
 
@@ -19,7 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/Montserrat-Bold.ttf");
 
     // 2d camera
-    commands.spawn(Camera2d::default());
+    commands.spawn((Camera2d::default(), MainCamera));
     // Demonstrate changing translation
 
     let box_position = Vec2::new(0.0, -250.0);
@@ -110,6 +129,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ));
         });
+
+    commands.spawn((
+        Text2d::new(""),
+        slightly_smaller_text_font.clone(),
+        TypingText {
+            full_text: "Hello, world! This is a refined and optimized typing effect.".to_string(),
+            visible_length: 5,
+            timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            is_skipping: false,
+        },
+        Transform::from_translation(Vec3::new(0.0, 200.0, 0.0)),
+    ));
 }
 
 fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
@@ -123,6 +154,7 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
 
 fn mouse_motion(mut evr_motion: EventReader<MouseMotion>) {
     for ev in evr_motion.read() {
+        println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
         println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
     }
 }
@@ -146,4 +178,53 @@ fn relative_cursor_position_system(
     } else {
         Color::srgb(0.9, 0.1, 0.1)
     };
+}
+
+fn text_typing_system(time: Res<Time>, mut query: Query<(&mut Text2d, &mut TypingText)>) {
+    for (mut text, mut typing_text) in query.iter_mut() {
+        if typing_text.is_skipping {
+            // Skip to full text
+            typing_text.visible_length = typing_text.full_text.len();
+        } else {
+            typing_text.timer.tick(time.delta());
+            if typing_text.timer.just_finished() {
+                // Increment visible length if there's more to reveal
+                if typing_text.visible_length < typing_text.full_text.len() {
+                    typing_text.visible_length += 1;
+                }
+            }
+        }
+        text.0 = typing_text
+            .full_text
+            .chars()
+            .take(typing_text.visible_length)
+            .collect();
+    }
+}
+
+fn input_skip_system(mut query: Query<&mut TypingText>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        for mut typing_text in query.iter_mut() {
+            typing_text.is_skipping = true;
+        }
+    }
+}
+
+fn my_cursor_system(
+    windows: Query<&Window>,
+    camera_q: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    let window = windows.single();
+    let (camera, camera_transform) = camera_q.single();
+
+    if let Some(world_position) = window
+        .cursor_position()
+        .and_then(|cursor| Some(camera.viewport_to_world_2d(camera_transform, cursor)))
+    {
+        eprintln!(
+            "World coords: {}/{}",
+            world_position.unwrap().x,
+            world_position.unwrap().y
+        );
+    }
 }
