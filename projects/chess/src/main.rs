@@ -1,11 +1,15 @@
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    picking::*,
     prelude::*,
-    window::{WindowTheme},
+    window::WindowTheme,
 };
 
+mod board;
 mod pieces;
-use pieces::*;
+
+use board::*;
+use pieces::*; // this use namespace
 
 #[derive(Resource)]
 struct Msaa {
@@ -14,45 +18,50 @@ struct Msaa {
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "Chess".into(),
-                    name: Some("bevy.app".into()),
-                    // Tells Wasm to resize the window according to the available canvas
-                    fit_canvas_to_parent: true,
-                    // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
-                    prevent_default_event_handling: false,
-                    window_theme: Some(WindowTheme::Dark),
-                    enabled_buttons: bevy::window::EnabledButtons {
-                        maximize: false,
-                        ..Default::default()
-                    },
-                    // This will spawn an invisible window
-                    // The window will be made visible in the make_visible() system after 3 frames.
-                    // This is useful when you want to avoid the white window that shows up before the GPU is ready to render the app.
-                    // visible: false,
-                    ..default()
-                }),
+        .add_plugins((DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Chess".into(),
+                name: Some("bevy.app".into()),
+                // Tells Wasm to resize the window according to the available canvas
+                fit_canvas_to_parent: true,
+                // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
+                prevent_default_event_handling: false,
+                window_theme: Some(WindowTheme::Dark),
+                enabled_buttons: bevy::window::EnabledButtons {
+                    maximize: false,
+                    ..Default::default()
+                },
+                // This will spawn an invisible window
+                // The window will be made visible in the make_visible() system after 3 frames.
+                // This is useful when you want to avoid the white window that shows up before the GPU is ready to render the app.
+                // visible: false,
                 ..default()
             }),
-            LogDiagnosticsPlugin::default(),
-            FrameTimeDiagnosticsPlugin,
-        ))
+            ..default()
+        }),))
         .add_systems(Startup, (setup, create_board, create_pieces))
+        .add_systems(Update, (draw_mesh_intersections, color_squares))
+        .add_plugins(MeshPickingPlugin)
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(MeshPickingSettings {
+            // Enable picking only for the right mouse button
+            require_markers: true,
+            ray_cast_visibility: RayCastVisibility::VisibleInView,
+        })
         .run();
 }
 
 /// Set up a simple 3D scene
 fn setup(mut commands: Commands) {
     //Camera
-    commands.spawn((   // mutable cause pub fn spawn<T: Bundle>(&mut self, bundle: T) -> EntityCommands
+    commands.spawn((
+        // mutable cause pub fn spawn<T: Bundle>(&mut self, bundle: T) -> EntityCommands
         Camera3d::default(),
         Transform::from_matrix(Mat4::from_rotation_translation(
             Quat::from_xyzw(-0.3, -0.5, -0.3, 0.5).normalize(),
             Vec3::new(-7.0, 20.0, 4.0),
         )),
+        RayCastPickable,
     ));
 
     // Light
@@ -63,34 +72,6 @@ fn setup(mut commands: Commands) {
         },
         Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
     ));
-}
-
-fn create_board(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let mesh = meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(0.5)));
-    let white_material = materials.add(Color::srgb(1., 0.9, 0.9));
-    let black_material = materials.add(Color::srgb(0., 0.1, 0.1));
-    
-    // Spawn 64 squares
-    for i in 0..8 {
-        for j in 0..8 {
-            let material;
-            if (i + j + 1) % 2 == 0 {
-                material = white_material.clone();
-            } else {
-                material = black_material.clone()
-            }
-            commands.spawn((
-                Mesh3d(mesh.clone()),
-                MeshMaterial3d(material),
-                Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
-            ));
-            
-        }
-    }
 }
 
 fn create_pieces(
@@ -119,7 +100,7 @@ fn create_pieces(
     // Add some materials
     let white_material = materials.add(Color::srgb(1., 0.8, 0.8));
     let black_material = materials.add(Color::srgb(0., 0.2, 0.2));
-    
+
     spawn_rook(
         &mut commands,
         white_material.clone(),
