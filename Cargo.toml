@@ -45,6 +45,7 @@ members = [
     "projects/shaders_test",
     "projects/survival2d",
     "projects/animation_test",
+    "projects/turn_based"
 ]
 
 
