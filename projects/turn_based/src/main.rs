@@ -7,17 +7,32 @@ const TILE_SIZE: f32 = 64.0;
 const GRID_WIDTH: u32 = 10;
 const GRID_HEIGHT: u32 = 10;
 
+fn is_player_turn(turn: Res<Turn>) -> bool {
+    *turn == Turn::Player
+}
+
+fn is_ai_turn(turn: Res<Turn>) -> bool {
+    *turn == Turn::AI
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .insert_resource(HoveredTile(None))
         .insert_resource(SelectedUnit(None))
+        .insert_resource(Turn::Player)
+        .insert_resource(AIDone(true))
+        .insert_resource(PlayerDone(false))
         .add_systems(Startup, setup)
         .add_systems(Update,
                      (
                          highlight_tile_under_cursor,
                          handle_clicks,
                      ))
+        .add_systems(Update, handle_clicks.run_if(is_player_turn))
+        .add_systems(Update, end_player_turn)
+        .add_systems(Update, ai_turn_system.run_if(is_ai_turn))
+        .add_systems(Update, end_ai_turn)
         .run();
 }
 
@@ -42,6 +57,17 @@ enum Unit {
     Enemy,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
+enum Turn {
+    Player,
+    AI,
+}
+
+#[derive(Resource, Default)]
+struct PlayerDone(bool);
+
+#[derive(Resource, Default)]
+struct AIDone(bool);
 
 fn setup(mut commands: Commands) {
     // Spawn 2D camera
@@ -151,6 +177,7 @@ fn handle_clicks(
     tile_query: Query<(&TilePos, &Transform), (With<Tile>, Without<Unit>)>,
     mut selected: ResMut<SelectedUnit>,
     mut unit_transforms: Query<&mut Transform, With<Unit>>,
+    mut player_done: ResMut<PlayerDone>,
 ) {
     if !buttons.just_pressed(MouseButton::Left) {
         return;
@@ -209,5 +236,45 @@ fn handle_clicks(
                 return;
             }
         }
+    }
+    player_done.0 = true; // after a successful move
+}
+
+fn end_ai_turn(
+    mut turn: ResMut<Turn>,
+    mut done: ResMut<AIDone>,
+) {
+    if done.0 {
+        done.0 = false;
+        *turn = Turn::Player;
+        info!("Switching to Player turn");
+    }
+}
+
+fn end_player_turn(
+    mut turn: ResMut<Turn>,
+    mut done: ResMut<PlayerDone>,
+) {
+    if done.0 {
+        done.0 = false;
+        *turn = Turn::AI;
+        info!("Switching to AI turn");
+    }
+}
+
+fn ai_turn_system(
+    mut done: ResMut<AIDone>,
+    mut timer: Local<Timer>,
+    time: Res<Time>,
+) {
+    if timer.finished() || timer.duration().is_zero() {
+        *timer = Timer::from_seconds(1.0, TimerMode::Once);
+    }
+
+    timer.tick(time.delta());
+
+    if timer.finished() {
+        info!("AI acted");
+        done.0 = true;
     }
 }
