@@ -5838,6 +5838,7 @@ name = "turned_based"
 version = "0.1.0"
 dependencies = [
  "bevy 0.15.3",
+ "rand",
 ]
 
 [[package]]

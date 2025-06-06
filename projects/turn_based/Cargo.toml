@@ -7,3 +7,4 @@ edition = "2021"
 #avian3d = { git = "https://github.com/Jondolf/avian", branch = "main" }
 bevy = { version = "0.15.3", features = ["dynamic_linking"] }
 #avian3d = { version = "0.2.0" }
+rand = "0.8"

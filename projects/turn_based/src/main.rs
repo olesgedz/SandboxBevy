@@ -3,6 +3,10 @@ use bevy::{
     input::mouse::*
 };
 
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+use std::collections::HashSet;
+
 const TILE_SIZE: f32 = 64.0;
 const GRID_WIDTH: u32 = 10;
 const GRID_HEIGHT: u32 = 10;
@@ -24,11 +28,7 @@ fn main() {
         .insert_resource(AIDone(true))
         .insert_resource(PlayerDone(false))
         .add_systems(Startup, setup)
-        .add_systems(Update,
-                     (
-                         highlight_tile_under_cursor,
-                         handle_clicks,
-                     ))
+        .add_systems(Update, highlight_tile_under_cursor)
         .add_systems(Update, handle_clicks.run_if(is_player_turn))
         .add_systems(Update, end_player_turn)
         .add_systems(Update, ai_turn_system.run_if(is_ai_turn))
@@ -231,13 +231,12 @@ fn handle_clicks(
                 if let Ok((_, mut unit_tile_pos, _)) = unit_query.get_mut(selected_entity) {
                     *unit_tile_pos = tile_pos.clone();
                 }
-
+                player_done.0 = true; // after a successful move
                 selected.0 = None; // Deselect
                 return;
             }
         }
     }
-    player_done.0 = true; // after a successful move
 }
 
 fn end_ai_turn(
@@ -262,19 +261,67 @@ fn end_player_turn(
     }
 }
 
+/// One AI turn: pick each enemy unit and move it to a random adjacent empty tile.
+/// When every enemy has tried to move, mark the turn as done.
 fn ai_turn_system(
     mut done: ResMut<AIDone>,
-    mut timer: Local<Timer>,
-    time: Res<Time>,
+    mut unit_query: Query<(Entity, &mut TilePos, &mut Transform, &Unit)>,
 ) {
-    if timer.finished() || timer.duration().is_zero() {
-        *timer = Timer::from_seconds(1.0, TimerMode::Once);
+    // Build a quick‐lookup set of all occupied tiles.
+    let mut occupied: HashSet<(u32, u32)> = HashSet::new();
+    for (_, pos, _, _) in unit_query.iter() {
+        occupied.insert((pos.x, pos.y));
     }
 
-    timer.tick(time.delta());
+    // Directions the AI can try (right, left, up, down).
+    let mut dirs = [(1i32, 0i32), (-1, 0), (0, 1), (0, -1)];
+    let mut rng = thread_rng();
 
-    if timer.finished() {
-        info!("AI acted");
-        done.0 = true;
+    for (_, mut pos, mut transform, unit_kind) in unit_query.iter_mut() {
+        // We only move enemy units.
+        if !matches!(unit_kind, Unit::Enemy) {
+            continue;
+        }
+
+        dirs.shuffle(&mut rng);
+
+        // Try the four neighbouring tiles in random order.
+        for (dx, dy) in dirs {
+            let nx = pos.x as i32 + dx;
+            let ny = pos.y as i32 + dy;
+
+            // Stay inside the board.
+            if nx < 0 || ny < 0 || nx >= GRID_WIDTH as i32 || ny >= GRID_HEIGHT as i32 {
+                continue;
+            }
+
+            let nxu = nx as u32;
+            let nyu = ny as u32;
+
+            // Skip if another unit is already there.
+            if occupied.contains(&(nxu, nyu)) {
+                continue;
+            }
+
+            // === Move the unit ===
+            occupied.remove(&(pos.x, pos.y));   // old spot is now free
+            occupied.insert((nxu, nyu));        // new spot is taken
+
+            pos.x = nxu;
+            pos.y = nyu;
+
+            // Convert grid coords → world coords.
+            let offset_x = -(GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+            let offset_y = -(GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+            transform.translation = Vec3::new(
+                nxu as f32 * TILE_SIZE + offset_x,
+                nyu as f32 * TILE_SIZE + offset_y,
+                1.0,
+            );
+            break; // move only once per unit
+        }
     }
+
+    // AI finished its turn.
+    done.0 = true;
 }
