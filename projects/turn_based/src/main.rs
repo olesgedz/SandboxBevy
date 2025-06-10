@@ -3,6 +3,7 @@ mod unit;
 use bevy::prelude::Color;
 use bevy::{input::mouse::*, prelude::*};
 
+use bevy::color::Color::Srgba;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::HashSet;
@@ -161,7 +162,6 @@ fn setup(mut commands: Commands) {
 }
 
 
-
 fn highlight_tile_under_cursor(
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
@@ -207,7 +207,7 @@ fn handle_clicks(
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
     mut unit_query: Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
-    tile_query: Query<(&TilePos, &Transform, &Sprite), (With<Tile>, Without<Unit>)>,
+    mut tile_query: Query<(&TilePos, &Transform, &mut Sprite), (With<Tile>, Without<Unit>)>,
     mut selected: ResMut<SelectedUnit>,
     mut unit_transforms: Query<&mut Transform, With<Unit>>,
     mut player_done: ResMut<PlayerDone>,
@@ -254,12 +254,20 @@ fn handle_clicks(
             if let Ok(mut sprite) = unit_query.get_mut(entity) {
                 sprite.2.color.set_alpha(0.6); // sprite.2 = Sprite component
             }
-            // for (tile_pos, tile_transform, &sprites) in &tile_query {
-            //     sprite.color = Color::
-            // }
             return;
         }
     }
+    // if let Some(selected_entity) = selected.0 {
+    //     let Ok((_, current_pos, _, stats)) = unit_query.get_mut(selected_entity) else { return };
+    //     for (tile_pos, tile_transform, mut sprite) in &mut tile_query {
+    //         let dx = (tile_pos.x as i32 - current_pos.x as i32).abs();
+    //         let dy = (tile_pos.y as i32 - current_pos.y as i32).abs();
+    //         if dx + dy < stats.movement as i32 {
+    //             sprite.color = Color::srgb(0.0, 1.0, 1.0);
+    //         }
+    //     }
+    // }
+
 
     // If a unit is selected and we clicked a tile
     if let Some(selected_entity) = selected.0 {
@@ -379,7 +387,6 @@ fn ai_turn_system(
 }
 
 fn update_turn_text(turn: Res<Turn>, mut text_query: Query<&mut Text, With<TurnText>>) {
-
     if let Ok(mut text) = text_query.get_single_mut() {
         text.0 = match *turn {
             Turn::Player => "Player Turn".to_string(),
