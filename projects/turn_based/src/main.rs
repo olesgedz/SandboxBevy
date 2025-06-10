@@ -1,7 +1,4 @@
-use bevy::{
-    prelude::*,
-    input::mouse::*
-};
+use bevy::{input::mouse::*, prelude::*};
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -32,6 +29,7 @@ fn main() {
         .add_systems(Update, handle_clicks.run_if(is_player_turn))
         .add_systems(Update, end_player_turn)
         .add_systems(Update, ai_turn_system.run_if(is_ai_turn))
+        .add_systems(Update, update_turn_text)
         .add_systems(Update, end_ai_turn)
         .run();
 }
@@ -56,6 +54,9 @@ enum Unit {
     Player,
     Enemy,
 }
+
+#[derive(Component)]
+struct TurnText;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 enum Turn {
@@ -98,10 +99,46 @@ fn setup(mut commands: Commands) {
     }
 
     // Spawn player unit at (1, 1)
-    spawn_unit(&mut commands, 1, 1, Unit::Player, Color::srgb(0.2, 1.0, 0.2), offset_x, offset_y);
+    spawn_unit(
+        &mut commands,
+        1,
+        1,
+        Unit::Player,
+        Color::srgb(0.2, 1.0, 0.2),
+        offset_x,
+        offset_y,
+    );
 
     // Spawn enemy unit at (8, 8)
-    spawn_unit(&mut commands, 8, 8, Unit::Enemy, Color::srgb(1.0, 0.2, 0.2), offset_x, offset_y);
+    spawn_unit(
+        &mut commands,
+        8,
+        8,
+        Unit::Enemy,
+        Color::srgb(1.0, 0.2, 0.2),
+        offset_x,
+        offset_y,
+    );
+
+    commands.spawn((
+        // Accepts a `String` or any type that converts into a `String`, such as `&str`
+        Text::new("Player Turn"),
+        TextFont {
+            // This font is loaded and will be used instead of the default font.
+            font_size: 67.0,
+            ..default()
+        },
+        // Set the justification of the Text
+        TextLayout::new_with_justify(JustifyText::Center),
+        // Set the style of the Node itself.
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(5.0),
+            right: Val::Px(5.0),
+            ..default()
+        },
+        TurnText,
+    ));
 }
 
 fn spawn_unit(
@@ -186,22 +223,32 @@ fn handle_clicks(
     let window = windows.single();
     let (camera, cam_transform) = camera_q.single();
 
-    let Some(cursor_pos) = window.cursor_position() else { return };
-    let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else { return };
+    let Some(cursor_pos) = window.cursor_position() else {
+        return;
+    };
+    let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else {
+        return;
+    };
     let cursor_world = ray.origin.truncate();
 
     // First: check if we clicked on a unit
     for (entity, pos, sprite) in unit_query.iter() {
-        let world_x = pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
-        let world_y = pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let world_x =
+            pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let world_y =
+            pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
 
         let half = TILE_SIZE * 0.5;
-        if cursor_world.x >= world_x - half && cursor_world.x <= world_x + half &&
-            cursor_world.y >= world_y - half && cursor_world.y <= world_y + half {
-
+        if cursor_world.x >= world_x - half
+            && cursor_world.x <= world_x + half
+            && cursor_world.y >= world_y - half
+            && cursor_world.y <= world_y + half
+        {
             // Deselect previously selected
             if let Some(prev) = selected.0 {
-                if let Ok(mut old_sprite) = unit_query.get(prev).map(|(_, _, sprite)| sprite.clone()) {
+                if let Ok(mut old_sprite) =
+                    unit_query.get(prev).map(|(_, _, sprite)| sprite.clone())
+                {
                     old_sprite.color.set_alpha(1.0); // Reset alpha
                 }
             }
@@ -220,9 +267,11 @@ fn handle_clicks(
         for (tile_pos, tile_transform) in &tile_query {
             let world_pos = tile_transform.translation.truncate();
             let half = TILE_SIZE * 0.5;
-            if cursor_world.x >= world_pos.x - half && cursor_world.x <= world_pos.x + half &&
-                cursor_world.y >= world_pos.y - half && cursor_world.y <= world_pos.y + half {
-
+            if cursor_world.x >= world_pos.x - half
+                && cursor_world.x <= world_pos.x + half
+                && cursor_world.y >= world_pos.y - half
+                && cursor_world.y <= world_pos.y + half
+            {
                 if let Ok(mut transform) = unit_transforms.get_mut(selected_entity) {
                     transform.translation = tile_transform.translation + Vec3::new(0.0, 0.0, 1.0);
                 }
@@ -239,10 +288,7 @@ fn handle_clicks(
     }
 }
 
-fn end_ai_turn(
-    mut turn: ResMut<Turn>,
-    mut done: ResMut<AIDone>,
-) {
+fn end_ai_turn(mut turn: ResMut<Turn>, mut done: ResMut<AIDone>) {
     if done.0 {
         done.0 = false;
         *turn = Turn::Player;
@@ -250,10 +296,7 @@ fn end_ai_turn(
     }
 }
 
-fn end_player_turn(
-    mut turn: ResMut<Turn>,
-    mut done: ResMut<PlayerDone>,
-) {
+fn end_player_turn(mut turn: ResMut<Turn>, mut done: ResMut<PlayerDone>) {
     if done.0 {
         done.0 = false;
         *turn = Turn::AI;
@@ -304,8 +347,8 @@ fn ai_turn_system(
             }
 
             // === Move the unit ===
-            occupied.remove(&(pos.x, pos.y));   // old spot is now free
-            occupied.insert((nxu, nyu));        // new spot is taken
+            occupied.remove(&(pos.x, pos.y)); // old spot is now free
+            occupied.insert((nxu, nyu)); // new spot is taken
 
             pos.x = nxu;
             pos.y = nyu;
@@ -324,4 +367,14 @@ fn ai_turn_system(
 
     // AI finished its turn.
     done.0 = true;
+}
+
+fn update_turn_text(turn: Res<Turn>, mut text_query: Query<&mut Text, With<TurnText>>) {
+
+    if let Ok(mut text) = text_query.get_single_mut() {
+        text.0 = match *turn {
+            Turn::Player => "Player Turn".to_string(),
+            Turn::AI => "AI Turn".to_string(),
+        };
+    }
 }
