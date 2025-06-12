@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::{TilePos, Unit, TILE_SIZE};
+use bevy::prelude::*;
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct Stats {
@@ -8,7 +8,9 @@ pub struct Stats {
     pub attack: i32,
     pub defense: i32,
     pub movement: u32, // number of tiles the unit can move per turn
-    pub range: u32,    // attack range in tiles
+    pub range: u32, // attack range in tiles
+    pub speed: u32,
+    pub max_move: u32,
 }
 
 pub fn spawn_unit(

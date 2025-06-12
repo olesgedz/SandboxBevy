@@ -1,9 +1,13 @@
 mod unit;
+mod logic;
 
 use bevy::prelude::Color;
 use bevy::{input::mouse::*, prelude::*};
 
 use bevy::color::Color::Srgba;
+use bevy::text::cosmic_text::Wrap::Word;
+use logic::*;
+use logic::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::HashSet;
@@ -30,9 +34,10 @@ fn main() {
         .insert_resource(Turn::Player)
         .insert_resource(AIDone(true))
         .insert_resource(PlayerDone(false))
-        .add_systems(Startup, setup)
+        .add_event::<EndTurnEvent>()
+        .add_systems(Startup, (setup, setup_turn_queue))
         .add_systems(Update, highlight_tile_under_cursor)
-        .add_systems(Update, handle_clicks.run_if(is_player_turn))
+        .add_systems(Update, (handle_clicks.run_if(is_player_turn), highlight_reachable_tiles.after(handle_clicks),))
         .add_systems(Update, end_player_turn)
         .add_systems(Update, ai_turn_system.run_if(is_ai_turn))
         .add_systems(Update, update_turn_text)
@@ -119,6 +124,7 @@ fn setup(mut commands: Commands) {
             defense: 1,
             movement: 3,
             range: 1,
+            ..default()
         },
     );
 
@@ -137,6 +143,7 @@ fn setup(mut commands: Commands) {
             defense: 0,
             movement: 2,
             range: 1,
+            ..default()
         },
     );
 
@@ -206,9 +213,10 @@ fn handle_clicks(
     buttons: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
+    turn: Res<Turn>,
+    mut selected: ResMut<SelectedUnit>,
     mut unit_query: Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
     mut tile_query: Query<(&TilePos, &Transform, &mut Sprite), (With<Tile>, Without<Unit>)>,
-    mut selected: ResMut<SelectedUnit>,
     mut unit_transforms: Query<&mut Transform, With<Unit>>,
     mut player_done: ResMut<PlayerDone>,
 ) {
@@ -219,90 +227,95 @@ fn handle_clicks(
     let window = windows.single();
     let (camera, cam_transform) = camera_q.single();
 
-    let Some(cursor_pos) = window.cursor_position() else {
-        return;
-    };
-    let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else {
-        return;
-    };
+    let Some(cursor_pos) = window.cursor_position() else { return };
+    let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else { return };
     let cursor_world = ray.origin.truncate();
 
-    // First: check if we clicked on a unit
-    for (entity, pos, sprite, _) in unit_query.iter() {
-        let world_x =
-            pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
-        let world_y =
-            pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
-
-        let half = TILE_SIZE * 0.5;
-        if cursor_world.x >= world_x - half
-            && cursor_world.x <= world_x + half
-            && cursor_world.y >= world_y - half
-            && cursor_world.y <= world_y + half
-        {
-            // Deselect previously selected
-            if let Some(prev) = selected.0 {
-                if let Ok(mut old_sprite) =
-                    unit_query.get(prev).map(|(_, _, sprite, _)| sprite.clone())
-                {
-                    old_sprite.color.set_alpha(1.0); // Reset alpha
-                }
-            }
-
-            // Select this unit
-            selected.0 = Some(entity);
-            if let Ok(mut sprite) = unit_query.get_mut(entity) {
-                sprite.2.color.set_alpha(0.6); // sprite.2 = Sprite component
-            }
-            return;
-        }
+    // Only handle player input during player turn
+    if *turn != Turn::Player {
+        return;
     }
-    // if let Some(selected_entity) = selected.0 {
-    //     let Ok((_, current_pos, _, stats)) = unit_query.get_mut(selected_entity) else { return };
-    //     for (tile_pos, tile_transform, mut sprite) in &mut tile_query {
-    //         let dx = (tile_pos.x as i32 - current_pos.x as i32).abs();
-    //         let dy = (tile_pos.y as i32 - current_pos.y as i32).abs();
-    //         if dx + dy < stats.movement as i32 {
-    //             sprite.color = Color::srgb(0.0, 1.0, 1.0);
-    //         }
-    //     }
-    // }
 
+    // Try to select a unit
+    if try_select_unit(
+        cursor_world,
+        &mut selected,
+        &mut unit_query,
+    ) {
+        return; // successfully selected, exit early
+    }
 
-    // If a unit is selected and we clicked a tile
+    // If already selected, try to move it
     if let Some(selected_entity) = selected.0 {
-        let Ok((_, current_pos, _, stats)) = unit_query.get_mut(selected_entity) else { return };
-
-        for (tile_pos, tile_transform, _) in &tile_query {
-            let world_pos = tile_transform.translation.truncate();
-            let half = TILE_SIZE * 0.5;
-            if cursor_world.x >= world_pos.x - half && cursor_world.x <= world_pos.x + half &&
-                cursor_world.y >= world_pos.y - half && cursor_world.y <= world_pos.y + half {
-
-                // ✅ Movement range check
-                let dx = (tile_pos.x as i32 - current_pos.x as i32).abs();
-                let dy = (tile_pos.y as i32 - current_pos.y as i32).abs();
-                if dx + dy > stats.movement as i32 {
-                    info!("Tile too far: movement = {}, tried dx = {}, dy = {}", stats.movement, dx, dy);
-                    return;
-                }
-
-                // Move the unit
-                if let Ok(mut transform) = unit_transforms.get_mut(selected_entity) {
-                    transform.translation = tile_transform.translation + Vec3::new(0.0, 0.0, 1.0);
-                }
-
-                // Update logical position
-                if let Ok((_, mut unit_tile_pos, _, _)) = unit_query.get_mut(selected_entity) {
-                    *unit_tile_pos = tile_pos.clone();
-                }
-
-                selected.0 = None;
-                player_done.0 = true;
-                return;
-            }
+        if try_move_selected_unit(
+            selected_entity,
+            cursor_world,
+            &mut unit_query,
+            &mut tile_query,
+            &mut unit_transforms,
+        ) {
+            selected.0 = None;
+            player_done.0 = true;
         }
     }
+}
+
+fn try_select_unit(
+    cursor_world: Vec2,
+    selected: &mut ResMut<SelectedUnit>,
+    unit_query: &mut Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
+) -> bool {
+    for (entity, pos, mut sprite, _) in unit_query.iter_mut() {
+        let world_x = pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let world_y = pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let half = TILE_SIZE * 0.5;
+
+        if cursor_world.x >= world_x - half && cursor_world.x <= world_x + half &&
+            cursor_world.y >= world_y - half && cursor_world.y <= world_y + half {
+
+            // Deselect old unit (no need to reset alpha here unless you store previous selection)
+            selected.0 = Some(entity);
+            sprite.color.set_alpha(0.6);
+            return true;
+        }
+    }
+    false
+}
+
+fn try_move_selected_unit(
+    selected_entity: Entity,
+    cursor_world: Vec2,
+    unit_query: &mut Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
+    tile_query: &mut Query<(&TilePos, &Transform, &mut Sprite), (With<Tile>, Without<Unit>)>,
+    unit_transforms: &mut Query<&mut Transform, With<Unit>>,
+) -> bool {
+    let Ok((_, mut unit_pos, _, stats)) = unit_query.get_mut(selected_entity) else {
+        return false;
+    };
+
+    for (tile_pos, tile_transform, _) in tile_query.iter_mut() {
+        let world_pos = tile_transform.translation.truncate();
+        let half = TILE_SIZE * 0.5;
+
+        if cursor_world.x >= world_pos.x - half && cursor_world.x <= world_pos.x + half &&
+            cursor_world.y >= world_pos.y - half && cursor_world.y <= world_pos.y + half {
+            let dx = (tile_pos.x as i32 - unit_pos.x as i32).abs();
+            let dy = (tile_pos.y as i32 - unit_pos.y as i32).abs();
+            if dx + dy > stats.movement as i32 {
+                info!("Tile too far");
+                return false;
+            }
+
+            if let Ok(mut transform) = unit_transforms.get_mut(selected_entity) {
+                transform.translation = tile_transform.translation + Vec3::new(0.0, 0.0, 1.0);
+            }
+
+            *unit_pos = tile_pos.clone();
+            return true;
+        }
+    }
+
+    false
 }
 
 fn end_ai_turn(mut turn: ResMut<Turn>, mut done: ResMut<AIDone>) {
@@ -384,6 +397,32 @@ fn ai_turn_system(
 
     // AI finished its turn.
     done.0 = true;
+}
+
+fn highlight_reachable_tiles(
+    selected: Res<SelectedUnit>,
+    unit_query: Query<(&TilePos, &Stats), With<Unit>>,
+    mut tile_query: Query<(&TilePos, &mut Sprite), With<Tile>>,
+) {
+    // First, clear all highlights
+    for (_, mut sprite) in tile_query.iter_mut() {
+        sprite.color = Color::srgb(0.0, 0.0, 1.0);
+    }
+
+    // If no unit is selected, stop here
+    let Some(selected_entity) = selected.0 else { return };
+
+    // Get the selected unit's position and movement
+    let Ok((unit_pos, stats)) = unit_query.get(selected_entity) else { return };
+
+    // Highlight reachable tiles
+    for (tile_pos, mut sprite) in tile_query.iter_mut() {
+        let dx = (tile_pos.x as i32 - unit_pos.x as i32).abs();
+        let dy = (tile_pos.y as i32 - unit_pos.y as i32).abs();
+        if dx + dy <= stats.movement as i32 {
+            sprite.color = Color::srgb(0.2, 0.4, 0.4); // Cyan-ish highlight
+        }
+    }
 }
 
 fn update_turn_text(turn: Res<Turn>, mut text_query: Query<&mut Text, With<TurnText>>) {
