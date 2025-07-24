@@ -26,7 +26,7 @@ bevy = { version = "0.15.1", features = ["webgl2", "dynamic_linking"] }
 iyes_perf_ui = "0.3.0"
 rand = "0.8.5"
 # For 2D applications:
-avian2d =  { version = "0.2.0" }
+avian2d = { version = "0.2.0" }
 # For 3D applications:
 avian3d = { version = "0.2.0" }
 bevy_egui = "0.31.1"
@@ -45,9 +45,9 @@ members = [
     "projects/shaders_test",
     "projects/survival2d",
     "projects/animation_test",
-    "projects/turn_based"
+    "projects/turn_based",
+    "projects/arkanoid"
 ]
-
 
 [[bin]]
 name = "platformer"

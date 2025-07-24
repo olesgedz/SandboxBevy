@@ -3,6 +3,10 @@
 ## Shooter
 ![image](https://github.com/user-attachments/assets/55faed68-8e1a-4cbc-8b3f-e096aaea71ff)
 
+
+## Survival2d
+![vampire](https://github.com/user-attachments/assets/84d42f71-84b4-4fd0-b41e-da05652d3efb)
+
 ## Chess
 ![Screenshot 2025-01-07 172135](https://github.com/user-attachments/assets/2fb1048b-5028-489a-b664-aeab968391fe)
 
