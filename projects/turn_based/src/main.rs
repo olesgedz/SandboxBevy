@@ -130,10 +130,48 @@ fn setup(mut commands: Commands) {
 
     spawn_unit(
         &mut commands,
+        2,
+        2,
+        Unit::Player,
+        Color::srgb(0.2, 1.0, 0.2),
+        offset_x,
+        offset_y,
+        Stats {
+            hp: 10,
+            max_hp: 10,
+            attack: 4,
+            defense: 1,
+            movement: 3,
+            range: 1,
+            ..default()
+        },
+    );
+
+    spawn_unit(
+        &mut commands,
         8,
         8,
         Unit::Enemy,
         Color::srgb(1.0, 0.2, 0.2),
+        offset_x,
+        offset_y,
+        Stats {
+            hp: 6,
+            max_hp: 6,
+            attack: 3,
+            defense: 0,
+            movement: 2,
+            range: 1,
+            ..default()
+        },
+    );
+
+    spawn_unit(
+        &mut commands,
+        5,
+        8,
+        Unit::Enemy,
+        Color::srgb(1.0, 0.2, 0.4),
         offset_x,
         offset_y,
         Stats {
