@@ -1,0 +1,96 @@
+images = [
+    "sprites/soul.png",
+    "sprites/pixel.png",
+
+    #buttons
+    "sprites/fightbutton.png",
+    "sprites/actbutton.png",
+    "sprites/itembutton.png",
+    "sprites/mercybutton.png",
+
+    "sprites/fightbar.png",
+    "sprites/timing.png",
+
+    "sprites/bipedpotato.png",
+    "sprites/bipedpotato2x.png",
+    "sprites/potato.png",
+    "sprites/shovel.png",
+
+    "sprites/slash.png"
+]
+atlases = [
+    {name = "button", size_x = 110.0, size_y = 42.0, frame_count = 2},
+    {name = "timing", size_x = 14.0, size_y = 128.0, frame_count = 2},
+    {name = "slash", size_x = 16.0, size_y = 94.0, frame_count = 7},
+]
+sounds = [
+    {name = "hurt", path = "sounds/snd_hurt1.wav", volume = 1.0},
+    {name = "attack", path = "sounds/snd_laz.wav", volume = 1.0},
+    {name = "move_menu", path = "sounds/snd_squeak.wav", volume = 1.0},
+    {name = "text", path = "sounds/SND_TXT2.wav", volume = 1.0},
+    {name = "select", path = "sounds/snd_select.wav", volume = 1.0},
+    {name = "dust", path = "sounds/snd_vaporized.wav", volume = 1.0}
+]
+fonts = [
+    "fonts/Mars_Needs_Cunnilingus.ttf",
+    "fonts/DTM-Mono.ttf",
+    "fonts/DTM-Sans.ttf",
+    "fonts/8-BIT WONDER.ttf",
+    "fonts/Hachiro.ttf"
+]
+
+
+[[animations]]
+name = "monster"
+    [[animations.group]]
+    name = "idle"
+    start = 1
+    end = 1
+    cooldown = 0.1
+    looping = true
+
+[[animations]]
+name = "slash"
+    [[animations.group]]
+    name = "idle"
+    start = 7
+    end = 7
+    cooldown = 0.1
+    looping = true
+    [[animations.group]]
+    name = "slash"
+    start = 1
+    end = 6
+    cooldown = 0.166666666666
+    looping = false
+
+[[animations]]
+name = "button"
+    [[animations.group]]
+    name = "hover"
+    start = 1
+    end = 1
+    cooldown = 0.1
+    looping = true
+    [[animations.group]]
+    name = "inactive"
+    start = 2
+    end = 2
+    cooldown = 0.1
+    looping = true
+
+
+[[animations]]
+name = "timing"
+    [[animations.group]]
+    name = "idle"
+    start = 1
+    end = 1
+    cooldown = 0.05
+    looping = true
+    [[animations.group]]
+    name = "flash"
+    start = 1
+    end = 2
+    cooldown = 0.05
+    looping = true
