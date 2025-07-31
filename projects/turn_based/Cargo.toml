@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 #avian3d = { git = "https://github.com/Jondolf/avian", branch = "main" }
-bevy = { version = "0.15.3", features = ["dynamic_linking"] }
+bevy = { version = "0.16.0", features = ["dynamic_linking"] }
 #avian3d = { version = "0.2.0" }
 rand = "0.8"
