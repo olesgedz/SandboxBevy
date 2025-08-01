@@ -44,6 +44,7 @@ members = [
     "projects/turn_based",
     "projects/arkanoid",
     "projects/underpotato",
+    "cheatbook",
 ]
 
 [[bin]]
