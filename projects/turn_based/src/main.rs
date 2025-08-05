@@ -214,36 +214,38 @@ fn highlight_tile_under_cursor(
     mut hovered: ResMut<HoveredTile>,
 ) {
     let window = windows.single();
-    let (camera, cam_transform) = camera_q.single();
+    if let Ok((camera, cam_transform)) = camera_q.single() {
+        if let Some(cursor_pos) = window.unwrap().cursor_position() {
+            // Convert screen coordinates to world space
+            if let Ok(world_pos) = camera.viewport_to_world(cam_transform, cursor_pos) {
+                let cursor_world = world_pos.origin.truncate();
 
-    if let Some(cursor_pos) = window.cursor_position() {
-        // Convert screen coordinates to world space
-        if let Ok(world_pos) = camera.viewport_to_world(cam_transform, cursor_pos) {
-            let cursor_world = world_pos.origin.truncate();
+                // Find tile under cursor
+                let mut new_hovered = None;
 
-            // Find tile under cursor
-            let mut new_hovered = None;
+                for (entity, mut sprite, transform) in &mut tiles {
+                    let pos = transform.translation.truncate();
+                    let half_size = TILE_SIZE / 2.0;
 
-            for (entity, mut sprite, transform) in &mut tiles {
-                let pos = transform.translation.truncate();
-                let half_size = TILE_SIZE / 2.0;
+                    let in_bounds = cursor_world.x >= pos.x - half_size
+                        && cursor_world.x <= pos.x + half_size
+                        && cursor_world.y >= pos.y - half_size
+                        && cursor_world.y <= pos.y + half_size;
 
-                let in_bounds = cursor_world.x >= pos.x - half_size
-                    && cursor_world.x <= pos.x + half_size
-                    && cursor_world.y >= pos.y - half_size
-                    && cursor_world.y <= pos.y + half_size;
-
-                if in_bounds {
-                    sprite.color = Color::srgb(0.2, 0.8, 0.2); // hover color
-                    new_hovered = Some(entity);
-                } else if Some(entity) == hovered.0 {
-                    // Restore color for previously hovered tile
-                    sprite.color = Color::srgb(0.2, 0.2, 0.8);
+                    if in_bounds {
+                        sprite.color = Color::srgb(0.2, 0.8, 0.2); // hover color
+                        new_hovered = Some(entity);
+                    } else if Some(entity) == hovered.0 {
+                        // Restore color for previously hovered tile
+                        sprite.color = Color::srgb(0.2, 0.2, 0.8);
+                    }
                 }
-            }
 
-            hovered.0 = new_hovered;
+                hovered.0 = new_hovered;
+            }
         }
+    } else {
+        eprintln!("Failed to get camera");
     }
 }
 
@@ -263,38 +265,40 @@ fn handle_clicks(
     }
 
     let window = windows.single();
-    let (camera, cam_transform) = camera_q.single();
+    if let Ok((camera, cam_transform)) = camera_q.single() {
+        let Some(cursor_pos) = window.unwrap().cursor_position() else { return };
+        let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else { return };
+        let cursor_world = ray.origin.truncate();
 
-    let Some(cursor_pos) = window.cursor_position() else { return };
-    let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else { return };
-    let cursor_world = ray.origin.truncate();
-
-    // Only handle player input during player turn
-    if *turn != Turn::Player {
-        return;
-    }
-
-    // Try to select a unit
-    if try_select_unit(
-        cursor_world,
-        &mut selected,
-        &mut unit_query,
-    ) {
-        return; // successfully selected, exit early
-    }
-
-    // If already selected, try to move it
-    if let Some(selected_entity) = selected.0 {
-        if try_move_selected_unit(
-            selected_entity,
-            cursor_world,
-            &mut unit_query,
-            &mut tile_query,
-            &mut unit_transforms,
-        ) {
-            selected.0 = None;
-            player_done.0 = true;
+        // Only handle player input during player turn
+        if *turn != Turn::Player {
+            return;
         }
+
+        // Try to select a unit
+        if try_select_unit(
+            cursor_world,
+            &mut selected,
+            &mut unit_query,
+        ) {
+            return; // successfully selected, exit early
+        }
+
+        // If already selected, try to move it
+        if let Some(selected_entity) = selected.0 {
+            if try_move_selected_unit(
+                selected_entity,
+                cursor_world,
+                &mut unit_query,
+                &mut tile_query,
+                &mut unit_transforms,
+            ) {
+                selected.0 = None;
+                player_done.0 = true;
+            }
+        }
+    } else {
+        eprintln!("Failed to get camera");
     }
 }
 

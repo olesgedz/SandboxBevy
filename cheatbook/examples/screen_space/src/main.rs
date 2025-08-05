@@ -39,8 +39,8 @@ fn my_cursor_system(
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) {
     // get the camera info and transform
-    // assuming there is exactly one main camera entity, so Query::single() is OK
     let Ok((camera, camera_transform)) = q_camera.single() else { return; };
+    // assuming there is exactly one main camera entity, so Query::single() is OK
     // 
     // // There is only one primary window, so we can similarly get it from the query:
     // let window = q_window.single().unwrap();
