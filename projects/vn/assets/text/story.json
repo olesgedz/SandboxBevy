@@ -1,0 +1,83 @@
+{
+  "title": "The Mysterious Letter",
+  "lines": [
+    {
+      "character": "Narrator",
+      "text": "You find yourself in a quiet library on a rainy afternoon. The smell of old books fills the air, and the sound of rain tapping against the windows creates a peaceful atmosphere.",
+      "background": "library",
+      "character_sprite": null,
+      "choices": null
+    },
+    {
+      "character": "Trucy",
+      "text": "As you browse through the shelves, you notice a peculiar letter tucked between two books. It seems to be addressed to you, though you don't recognize the handwriting.",
+      "background": "library",
+      "character_sprite": "trucy",
+      "choices": null
+    },
+    {
+      "character": "Phoenix",
+      "text": "Ah, you're here! I've been expecting you. That letter has been waiting for quite some time.",
+      "background": "library",
+      "character_sprite": "phoenix",
+      "choices": null
+    },
+    {
+      "character": "Phoenix",
+      "text": "There's something I need to show you in the restricted section. Will you follow me?",
+      "background": "library",
+      "character_sprite": "phoenix_confident",
+      "choices": [
+        {
+          "text": "Yes, I'll follow you. I'm curious about what you want to show me.",
+          "next_line": 4
+        },
+        {
+          "text": "I need to think about this. Can you tell me more first?",
+          "next_line": 5
+        },
+        {
+          "text": "I'm not sure. This seems suspicious.",
+          "next_line": 6
+        }
+      ]
+    },
+    {
+      "character": "Narrator",
+      "text": "You follow the librarian through the dusty shelves, deeper into the library than you've ever been before. The air grows colder, and you notice strange symbols carved into the wooden beams above.",
+      "background": "library_back",
+      "character_sprite": null,
+      "choices": null
+    },
+    {
+      "character": "Phoenix",
+      "text": "Of course! The letter contains ancient knowledge that could change everything. But first, I need to know if you're ready to see what lies beyond our ordinary world.",
+      "background": "library",
+      "character_sprite": "phoenix",
+      "choices": [
+        {
+          "text": "I'm ready. Show me what you have.",
+          "next_line": 4
+        },
+        {
+          "text": "I need more time to think about this.",
+          "next_line": 7
+        }
+      ]
+    },
+    {
+      "character": "Narrator",
+      "text": "You decide to trust your instincts and decline the offer. The librarian nods understandingly, though you sense a hint of disappointment in their eyes.",
+      "background": "library",
+      "character_sprite": null,
+      "choices": null
+    },
+    {
+      "character": "Narrator",
+      "text": "You take your time to consider the librarian's offer. The letter remains in your hands, its contents still a mystery. Perhaps some secrets are better left undiscovered...",
+      "background": "library",
+      "character_sprite": null,
+      "choices": null
+    }
+  ]
+}
