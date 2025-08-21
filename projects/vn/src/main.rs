@@ -1,14 +1,12 @@
-use bevy::asset::AssetPath;
-use bevy::ecs::error::HandleError;
+mod loading;
+
+use bevy::asset::AssetLoader;
+use bevy::color::palettes::css::*;
 use bevy::ecs::system::ParamSet;
-use bevy::log::tracing_subscriber::fmt::writer::MakeWriterExt;
 use bevy::prelude::*;
-use rand::TryRngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::Path;
-use std::process::exit;
 
 // Game states
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -62,6 +60,10 @@ struct StoryData {
 }
 
 #[derive(Resource)]
+struct Sounds {
+    sound_effects: HashMap<String, Handle<AudioSource>>,
+}
+#[derive(Resource)]
 struct GameAssets {
     character_sprites: HashMap<String, Handle<Image>>,
 }
@@ -79,6 +81,8 @@ struct TypewriterState {
 #[derive(Event)]
 struct NextDialogue;
 
+#[derive(Resource, Deref)]
+struct CollisionSound(Handle<AudioSource>);
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -91,6 +95,9 @@ fn main() {
             ..default()
         }))
         .init_state::<GameState>()
+        // .insert_resource(Sounds {
+        //     sound_effects: HashMap::new(),
+        // })
         .add_event::<NextDialogue>()
         .add_systems(Startup, setup)
         .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
@@ -120,13 +127,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load story from JSON file
     //get bevy assets path
 
-    let a = AssetPath::path;
-    println!("Asset path: {:?}", AssetPath::default());
-    let story_json = std::fs::read_to_string("path").expect("Failed to read story.json");
+    let json_str = include_str!("../assets/text/story.json").to_string();
 
-    // asset_server.load("story .json");
-
-    let story: Story = serde_json::from_str(&story_json).expect("Failed to parse story.json");
+    let story: Story = serde_json::from_str(&json_str).expect("Failed to parse story.json");
 
     println!("Loaded story: {}", story.title);
     println!("Total dialogue lines: {}", story.lines.len());
@@ -180,6 +183,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         chars_per_second: 120.0,
         char_progress_accum: 0.0,
     });
+
+    let female_talk: Handle<AudioSource> = asset_server.load("sounds/sfx-blipfemale.wav");
+
+    commands.insert_resource(CollisionSound(female_talk));
+    commands.spawn(AudioPlayer::new(asset_server.load("sounds/snd_hurt1.wav")));
+
+    //
+    // let mut sound_effects:HashMap<String, Handle<AudioSource>> = HashMap::new();
+    // sound_effects.insert("female".into(), female_talk);
+    // commands.insert_resource(Sounds {
+    //     sound_effects
+    // });
 }
 
 fn spawn_main_menu(mut commands: Commands) {
@@ -295,6 +310,9 @@ fn handle_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<NextState<GameState>>,
     typewriter: Res<TypewriterState>,
+    // mut sounds: ResMut<Sounds>,
+    mut commands: Commands,
+    sound: Res<CollisionSound>,
 ) {
     // Handle keyboard input
     if keyboard_input.just_pressed(KeyCode::Space) {
@@ -311,6 +329,19 @@ fn handle_input(
         }
     }
 
+    if keyboard_input.just_pressed(KeyCode::KeyM) {
+        // For debugging, switch to main menu
+        println!("Switching to MainMenu state");
+        game_state.set(GameState::MainMenu);
+    }
+
+    if keyboard_input.just_pressed(KeyCode::KeyS) {
+        // For debugging, switch to main menu
+        println!("PlaySound");
+        // Play sound effect
+        commands.spawn((AudioPlayer(sound.clone()), PlaybackSettings::DESPAWN));
+    }
+
     if keyboard_input.just_pressed(KeyCode::Escape) {
         game_state.set(GameState::MainMenu);
     }
@@ -318,13 +349,13 @@ fn handle_input(
 
 fn update_dialogue(
     mut next_dialogue_events: EventReader<NextDialogue>,
-    mut story_data: ResMut<StoryData>,
+    story_data: ResMut<StoryData>,
     mut queries: ParamSet<(
         Query<&mut Text, With<CharacterName>>,
         Query<&mut Text, With<DialogueText>>,
     )>,
     mut typewriter: ResMut<TypewriterState>,
-    mut sprite_query: Query<&mut CharacterSpriteImage>,
+    sprite_query: Query<&mut CharacterSpriteImage>,
     mut test_query: Query<&mut Sprite, With<Test>>,
     game_assets: Res<GameAssets>,
     asset_server: Res<AssetServer>,
