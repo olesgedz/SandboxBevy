@@ -29,7 +29,11 @@ struct Story {
     title: String,
     lines: Vec<DialogueLine>,
 }
-
+#[derive(Resource)]
+struct PlayTypeWriterSound {
+    timer: Timer,
+    last_number_characters: usize,
+}
 // Components
 #[derive(Component)]
 struct MainMenuUI;
@@ -98,6 +102,10 @@ fn main() {
         // .insert_resource(Sounds {
         //     sound_effects: HashMap::new(),
         // })
+        .insert_resource(PlayTypeWriterSound {
+            timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+            last_number_characters: 0,
+        })
         .add_event::<NextDialogue>()
         .add_systems(Startup, setup)
         .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
@@ -187,8 +195,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let female_talk: Handle<AudioSource> = asset_server.load("sounds/sfx-blipfemale.wav");
 
     commands.insert_resource(CollisionSound(female_talk));
-    commands.spawn(AudioPlayer::new(asset_server.load("sounds/snd_hurt1.wav")));
-
     //
     // let mut sound_effects:HashMap<String, Handle<AudioSource>> = HashMap::new();
     // sound_effects.insert("female".into(), female_talk);
@@ -339,7 +345,6 @@ fn handle_input(
         // For debugging, switch to main menu
         println!("PlaySound");
         // Play sound effect
-        commands.spawn((AudioPlayer(sound.clone()), PlaybackSettings::DESPAWN));
     }
 
     if keyboard_input.just_pressed(KeyCode::Escape) {
@@ -415,7 +420,11 @@ fn animate_typewriter(
     mut dialogue_text_query: Query<&mut Text, With<DialogueText>>,
     mut story_data: ResMut<StoryData>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    mut sound_timer: ResMut<PlayTypeWriterSound>,
+    sound: Res<CollisionSound>,
 ) {
+    sound_timer.timer.tick(time.delta());
     if !typewriter.is_animating {
         return;
     }
@@ -433,12 +442,17 @@ fn animate_typewriter(
     let add = typewriter.char_progress_accum.floor() as usize;
     typewriter.char_progress_accum -= add as f32;
 
-    // Uncomment if you still need verbose debugging
     // println!("Animating: delta={:.3}s, total_chars={}, visible_chars={}, add={}, accum={:.2}",
     //          delta, total_chars, typewriter.visible_chars, add, typewriter.char_progress_accum);
 
     if add > 0 {
         typewriter.visible_chars = (typewriter.visible_chars + add).min(total_chars);
+        if sound_timer.timer.finished() {
+            // Play sound effect for each character typed
+            commands.spawn((AudioPlayer(sound.clone()), PlaybackSettings::DESPAWN));
+            // Reset the timer
+            sound_timer.timer.reset();
+        }
     }
 
     let partial: String = typewriter
