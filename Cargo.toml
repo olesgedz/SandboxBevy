@@ -45,6 +45,7 @@ members = [
     "projects/arkanoid",
     "projects/underpotato",
     "projects/vn",
+    "projects/turn_test",
     "cheatbook",
 ]
 
