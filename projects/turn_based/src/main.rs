@@ -1,18 +1,17 @@
-mod unit;
 mod logic;
+mod unit;
 
 use bevy::prelude::Color;
 use bevy::{input::mouse::*, prelude::*};
 
 use bevy::color::Color::Srgba;
-use bevy::text::cosmic_text::Wrap::Word;
+use cosmic_text::Wrap::Word;
 use logic::*;
 use logic::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::HashSet;
 use unit::*;
-
 
 const TILE_SIZE: f32 = 64.0;
 const GRID_WIDTH: u32 = 10;
@@ -34,10 +33,16 @@ fn main() {
         .insert_resource(Turn::Player)
         .insert_resource(AIDone(true))
         .insert_resource(PlayerDone(false))
-        .add_event::<EndTurnEvent>()
+        .add_message::<EndTurnEvent>()
         .add_systems(Startup, (setup, setup_turn_queue))
         .add_systems(Update, highlight_tile_under_cursor)
-        .add_systems(Update, (handle_clicks.run_if(is_player_turn), highlight_reachable_tiles.after(handle_clicks),))
+        .add_systems(
+            Update,
+            (
+                handle_clicks.run_if(is_player_turn),
+                highlight_reachable_tiles.after(handle_clicks),
+            ),
+        )
         .add_systems(Update, end_player_turn)
         .add_systems(Update, ai_turn_system.run_if(is_ai_turn))
         .add_systems(Update, update_turn_text)
@@ -194,7 +199,7 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         // Set the justification of the Text
-        TextLayout::new_with_justify(JustifyText::Center),
+        TextLayout::new_with_justify(Justify::Center),
         // Set the style of the Node itself.
         Node {
             position_type: PositionType::Absolute,
@@ -205,7 +210,6 @@ fn setup(mut commands: Commands) {
         TurnText,
     ));
 }
-
 
 fn highlight_tile_under_cursor(
     windows: Query<&Window>,
@@ -266,8 +270,12 @@ fn handle_clicks(
 
     let window = windows.single();
     if let Ok((camera, cam_transform)) = camera_q.single() {
-        let Some(cursor_pos) = window.unwrap().cursor_position() else { return };
-        let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else { return };
+        let Some(cursor_pos) = window.unwrap().cursor_position() else {
+            return;
+        };
+        let Ok(ray) = camera.viewport_to_world(cam_transform, cursor_pos) else {
+            return;
+        };
         let cursor_world = ray.origin.truncate();
 
         // Only handle player input during player turn
@@ -276,11 +284,7 @@ fn handle_clicks(
         }
 
         // Try to select a unit
-        if try_select_unit(
-            cursor_world,
-            &mut selected,
-            &mut unit_query,
-        ) {
+        if try_select_unit(cursor_world, &mut selected, &mut unit_query) {
             return; // successfully selected, exit early
         }
 
@@ -305,16 +309,23 @@ fn handle_clicks(
 fn try_select_unit(
     cursor_world: Vec2,
     selected: &mut ResMut<SelectedUnit>,
-    unit_query: &mut Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
+    unit_query: &mut Query<
+        (Entity, &mut TilePos, &mut Sprite, &Stats),
+        (With<Unit>, Without<Tile>),
+    >,
 ) -> bool {
     for (entity, pos, mut sprite, _) in unit_query.iter_mut() {
-        let world_x = pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
-        let world_y = pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let world_x =
+            pos.x as f32 * TILE_SIZE - (GRID_WIDTH as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
+        let world_y =
+            pos.y as f32 * TILE_SIZE - (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0 + TILE_SIZE / 2.0;
         let half = TILE_SIZE * 0.5;
 
-        if cursor_world.x >= world_x - half && cursor_world.x <= world_x + half &&
-            cursor_world.y >= world_y - half && cursor_world.y <= world_y + half {
-
+        if cursor_world.x >= world_x - half
+            && cursor_world.x <= world_x + half
+            && cursor_world.y >= world_y - half
+            && cursor_world.y <= world_y + half
+        {
             // Deselect old unit (no need to reset alpha here unless you store previous selection)
             selected.0 = Some(entity);
             sprite.color.set_alpha(0.6);
@@ -327,7 +338,10 @@ fn try_select_unit(
 fn try_move_selected_unit(
     selected_entity: Entity,
     cursor_world: Vec2,
-    unit_query: &mut Query<(Entity, &mut TilePos, &mut Sprite, &Stats), (With<Unit>, Without<Tile>)>,
+    unit_query: &mut Query<
+        (Entity, &mut TilePos, &mut Sprite, &Stats),
+        (With<Unit>, Without<Tile>),
+    >,
     tile_query: &mut Query<(&TilePos, &Transform, &mut Sprite), (With<Tile>, Without<Unit>)>,
     unit_transforms: &mut Query<&mut Transform, With<Unit>>,
 ) -> bool {
@@ -339,8 +353,11 @@ fn try_move_selected_unit(
         let world_pos = tile_transform.translation.truncate();
         let half = TILE_SIZE * 0.5;
 
-        if cursor_world.x >= world_pos.x - half && cursor_world.x <= world_pos.x + half &&
-            cursor_world.y >= world_pos.y - half && cursor_world.y <= world_pos.y + half {
+        if cursor_world.x >= world_pos.x - half
+            && cursor_world.x <= world_pos.x + half
+            && cursor_world.y >= world_pos.y - half
+            && cursor_world.y <= world_pos.y + half
+        {
             let dx = (tile_pos.x as i32 - unit_pos.x as i32).abs();
             let dy = (tile_pos.y as i32 - unit_pos.y as i32).abs();
             if dx + dy > stats.movement as i32 {
@@ -452,10 +469,14 @@ fn highlight_reachable_tiles(
     }
 
     // If no unit is selected, stop here
-    let Some(selected_entity) = selected.0 else { return };
+    let Some(selected_entity) = selected.0 else {
+        return;
+    };
 
     // Get the selected unit's position and movement
-    let Ok((unit_pos, stats)) = unit_query.get(selected_entity) else { return };
+    let Ok((unit_pos, stats)) = unit_query.get(selected_entity) else {
+        return;
+    };
 
     // Highlight reachable tiles
     for (tile_pos, mut sprite) in tile_query.iter_mut() {
@@ -468,7 +489,7 @@ fn highlight_reachable_tiles(
 }
 
 fn update_turn_text(turn: Res<Turn>, mut text_query: Query<&mut Text, With<TurnText>>) {
-    if let Ok(mut text) = text_query.get_single_mut() {
+    if let Ok(mut text) = text_query.single_mut() {
         text.0 = match *turn {
             Turn::Player => "Player Turn".to_string(),
             Turn::AI => "AI Turn".to_string(),

@@ -7,12 +7,9 @@ pub struct TurnQueue(Vec<Entity>);
 
 #[derive(Resource)]
 pub struct CurrentTurn(Option<Entity>);
-#[derive(Event)]
+#[derive(Event, Message)]
 pub struct EndTurnEvent;
-pub fn setup_turn_queue(
-    mut commands: Commands,
-    units: Query<(Entity, &Stats)>,
-) {
+pub fn setup_turn_queue(mut commands: Commands, units: Query<(Entity, &Stats)>) {
     let mut queue: Vec<(Entity, u32)> = units.iter().map(|(e, stats)| (e, stats.speed)).collect();
 
     // sort by speed descending
@@ -24,10 +21,7 @@ pub fn setup_turn_queue(
     commands.insert_resource(CurrentTurn(None));
 }
 
-pub fn begin_turn(
-    mut current: ResMut<CurrentTurn>,
-    mut queue: ResMut<TurnQueue>,
-) {
+pub fn begin_turn(mut current: ResMut<CurrentTurn>, mut queue: ResMut<TurnQueue>) {
     if current.0.is_none() {
         if let Some(next) = queue.0.first().copied() {
             current.0 = Some(next);
@@ -36,10 +30,7 @@ pub fn begin_turn(
     }
 }
 
-pub fn end_turn(
-    mut current: ResMut<CurrentTurn>,
-    mut queue: ResMut<TurnQueue>,
-) {
+pub fn end_turn(mut current: ResMut<CurrentTurn>, mut queue: ResMut<TurnQueue>) {
     if let Some(done_unit) = current.0 {
         queue.0.remove(0);
         queue.0.push(done_unit); // rotate to back
